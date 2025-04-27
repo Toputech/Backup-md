@@ -40,7 +40,7 @@ async function loading(dest, zk) {
 }
 
 zokou({
-  //nomCom: "test",
+  nomCom: "gaza",
   aliases: ["alive", "testing"],
   categorie: "system",
   reaction: "⚔️"
@@ -78,7 +78,7 @@ zokou({
     mimetype: 'audio/mpeg',
     ptt: true,  // Marking this as a "Push-to-Talk" message
     waveform: [100, 0, 100, 0, 100, 0, 100],
-    fileName: 'shizo',
+    fileName: 'fun',
     contextInfo: {
       externalAdReply: {
         title: '𝗜 𝗔𝗠 𝗔𝗟𝗜𝗩𝗘 𝗠𝗢𝗧𝗛𝗘𝗥𝗙𝗨𝗖𝗞𝗘𝗥',
@@ -367,7 +367,7 @@ zokou({
         `https://api.heroku.com/apps/${herokuAppName}/builds`,
         {
           source_blob: {
-            url: "https://github.com/Toputech/turn-meh/tarball/main",
+            url: "https://github.com/Toputech/Backup-md/tarball/main",
           },
         },
         {
