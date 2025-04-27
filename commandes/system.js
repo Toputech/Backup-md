@@ -40,7 +40,7 @@ async function loading(dest, zk) {
 }
 
 zokou({
-  nomCom: "gaza",
+  nomCom: "test",
   aliases: ["alive", "testing"],
   categorie: "system",
   reaction: "⚔️"
@@ -81,7 +81,7 @@ zokou({
     fileName: 'fun',
     contextInfo: {
       externalAdReply: {
-        title: '𝗜 𝗔𝗠 𝗔𝗟𝗜𝗩𝗘 𝗠𝗢𝗧𝗛𝗘𝗥𝗙𝗨𝗖𝗞𝗘𝗥',
+        title: '𝐀𝐋𝐎𝐍𝐄 𝐌𝐃 𝐚𝐜𝐭𝐢𝐯𝐞 𝐉𝐔𝐒𝐓 𝐋𝐈𝐊𝐄 𝐉𝐄𝐓 💯',
         body: conf.OWNER_NAME,
         thumbnailUrl: conf.URL,
         sourceUrl: conf.GURL, // Corrected variable name
