@@ -1372,11 +1372,9 @@ if (conf.AUTO_LIKE_STATUS === "yes") {
                 await activateCrons();
 
                 if((conf.DP).toLowerCase() === 'no') {     
-                    const response = await axios.get("https://nekos.life/api/v2/fact");
-    const data = response.data;
                 let cmsg = `ALONE-MD  RUNNING ...
     
-    FACT:  ${data.fact} 
+    Prefix : [ ${prefixe} ]
     Mode :${md} mode
     Total Command : ${evt.cm.length}
     Owner : TOPU TECH 🦸  
