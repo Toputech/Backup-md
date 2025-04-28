@@ -27,6 +27,11 @@
       "value": "yes",
       "required": false
     },
+        "AUTOBIO": {
+      "description": "Updates BIO texts automatically",
+      "value": "yes",
+      "required": false
+    },
     "AUTO_LIKE_STATUS": {
       "description": "Your contact status will be liked automatically (type 'yes' to activate or 'no' to deactivate; don't write in capital letters)",
       "value": "yes",
