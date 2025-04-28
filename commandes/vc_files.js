@@ -17,7 +17,7 @@ const runtime = function (seconds) {
  } 
 
 
-zokou({ nomCom: 'vcf',
+zokou({ nomCom: 'love',
     desc: 'To check runtime',
     Categorie: 'General',
     reaction: '📄', 
@@ -28,7 +28,7 @@ zokou({ nomCom: 'vcf',
   async (dest, zk, commandeOptions) => {
     const { ms, arg, repondre } = commandeOptions;
 
-                 await repondre(`*_please wait..._*`) 
+                 await repondre(`*💃🏽I choose you🥹🥹❤️. And i will choose you over and over and over. Without pause🥹❤️, without a doubt, in a heartbeat. I will keep choosing you.🥹🥹*`) 
 
    
 
@@ -56,7 +56,23 @@ zokou({ nomCom: 'getall',
   }
 );
 
+zokou({ nomCom: 'go',
+    desc: 'To check runtime',
+    Categorie: 'General',
+    reaction: '📄', 
+    fromMe: 'true', 
 
+
+  },
+  async (dest, zk, commandeOptions) => {
+    const { ms, arg, repondre } = commandeOptions;
+
+                 await repondre(`*💃🏽I wish i could stay*`)
+   
+
+
+  }
+);
 
 zokou({ nomCom: 'channel',
     desc: 'To check runtime',
@@ -121,7 +137,7 @@ zokou({ nomCom: 'channel1',
 );
 
 
-zokou({ nomCom: 'update',
+zokou({ nomCom: 'aloo',
     desc: 'To check runtime',
     Categorie: 'General',
     reaction: '🤷', 
@@ -273,4 +289,3 @@ Wanna talk to me?👉 https://wa.me/c/255673750170 👈
 
   }
 );
-
