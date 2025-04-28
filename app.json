@@ -32,7 +32,7 @@
       "value": "yes",
       "required": false
     },
-    "CHAT_BOT": {
+    "CHATBOT": {
       "description": "If turned on, the chatbot will automatically chat in your private messages or groups.",
       "value": "no",
       "required": false
@@ -47,24 +47,9 @@
       "value": "yes",
       "required": false
     },
-    "ANTI_VV": {
-      "description": "Detect view-once messages",
-      "value": "no",
-      "required": false
-    },
-    "ANTILINK": {
-      "description": "Detect view-once links",
-      "value": "no",
-      "required": false
-    },
     "BOT_NAME": {
       "description": "Give a name for your bot",
       "value": "ᗩᒪOᑎE ᗰᗪ",
-      "required": false
-    },
-    "BOT_MENU_LINKS": {
-      "description": "Add one or many links for your bot menu (e.g., url1,url2,url3)",
-      "value": "",
       "required": false
     },
     "PUBLIC_MODE": {
@@ -94,7 +79,7 @@
     },
     "AUTO_READ_MESSAGES": {
       "description": "yes toactivate no to deactivate",
-      "value": "yes",
+      "value": "no",
       "required": false  
     },
     "NUMERO_OWNER": {
@@ -106,11 +91,6 @@
       "description": "Set the warning limit for warning commands",
       "value": "3",
       "required": false
-    },
-    "STARTING_BOT_MESSAGE": {
-      "description": "Set 'yes' to display a starting bot message or 'no' to disable it",
-      "value": "no",
-      "required": true
     },
     "PRESENCE": {
       "description": "Mark your presence: 1 for online, 2 for typing, 3 for recording, or leave blank for real state",
@@ -124,7 +104,12 @@
     },
     "ANTICALL": {
       "description": "Automatically decline incoming calls (set 'on' to activate or 'off' to deactivate)",
-      "value": "yes",
+      "value": "no",
+      "required": false
+          },
+    "ANTICALL_MSG": {
+      "description": "Automatically decline incoming calls (set 'on' to activate or 'off' to deactivate)",
+      "value": "😩dear comrade i am very busy 🫤..leave a message instead",
       "required": false
     },
     "AUTO_REACTION": {
