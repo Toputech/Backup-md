@@ -226,7 +226,7 @@ zokou( {
     
     
          let msg = `
-┏━━━┛ Boniphace md rank menu  ┗━━━┓
+┏━━━┛ ALONE MD rank menu  ┗━━━┓
      
   *Name :* ${nomAuteurMessage}
 
@@ -238,7 +238,7 @@ zokou( {
 
   *Messages :* ${rang.messages}
 
-   ┕━✿━┑ Boniphace tech ┍━✿━┙`
+   ┕━✿━┑ tech mob ┍━✿━┙`
     
      zk.sendMessage( 
         dest,
@@ -267,7 +267,7 @@ zokou( {
     const {ms , mybotpic} = commandeOptions ;
 
 
-       let msg = `┏━━┛ Boniphace Tech┗━━┓\n\n`
+       let msg = `┏━━┛ Tech mob ┗━━┓\n\n`
        
       let topRanks = await getBottom10Users() ;
         let mention = [] ;
@@ -314,7 +314,23 @@ zokou( {
                         image : { url : mybotpic() },
                         caption : msg,
                         mentions : mention
-                      },
+                      ,contextInfo: {
+        forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'Tech mob project ',
+              serverMessageId: 143},
+        externalAdReply: {
+          title: "Daily Quote",
+          body: "Here's an inspiring quote to motivate you!",
+          thumbnailUrl: conf.URL,
+          sourceUrl: conf.GURL,
+          mediaType: 1,
+        
+        }
+      }
+    }, 
                       {quoted : ms})
        
 
