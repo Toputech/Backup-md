@@ -57,7 +57,7 @@ zokou({ nomCom: "bot", categorie: "General" }, async (dest, zk, commandeOptions)
           title: "Follow for updates 🩸",
       body: "Enjoy...",
       thumbnailUrl:  {url : ppuser},
-          sourceUrl: conf.URL,
+          sourceUrl: conf.GURL,
           mediaType: 1,
           
         }
@@ -234,7 +234,7 @@ zokou( {
           title: "ALONE MD RANKED SUCCESSFULLY",
           body: "View channel for updates",
           thumbnailUrl: {url : ppuser},
-          sourceUrl: conf.gurl,
+          sourceUrl: conf.GURL,
           mediaType: 1,
         
         }
