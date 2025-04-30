@@ -134,7 +134,7 @@ zokou( {
     
     
          let msg = `
-┏━━━┛ Boniphace rank menu ┗━━━┓
+┏━━━┛ Alone Md rank menu ┗━━━┓
          
     *Name :* @${auteurMsgRepondu.split("@")[0]}
     
@@ -146,7 +146,7 @@ zokou( {
 
     *Messages :* ${rank.messages}
     
-   ┕━✿━┑ Boniphace tech ┍━✿━┙`
+   ┕━✿━┑  tech mob ┍━✿━┙`
     
      zk.sendMessage( 
         dest,
