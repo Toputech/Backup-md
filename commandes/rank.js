@@ -151,7 +151,6 @@ zokou( {
      zk.sendMessage( 
         dest,
         {
-            image : {url : ppuser},
             caption : msg,
             mentions : [auteurMsgRepondu]
         ,contextInfo: {
@@ -165,7 +164,7 @@ zokou( {
           title: "ALONE MD RANKED SUCCESSFULLY",
           body: "View channel for updates",
           thumbnailUrl: conf.URL,
-          sourceUrl: conf.GURL,
+          sourceUrl: {url : ppuser},
           mediaType: 1,
         
         }
@@ -311,7 +310,7 @@ zokou( {
 
        zk.sendMessage(dest,
                       {
-                        image : { url : mybotpic() },
+                
                         caption : msg,
                         mentions : mention
                       ,contextInfo: {
@@ -334,7 +333,87 @@ zokou( {
                       {quoted : ms})
        
 
-   })
+   });
+zokou( {
+  nomCom : "gettorank",
+ categorie : "Fun",
+   }, 
+   async(dest,zk, commandeOptions)=> {
+  
+    const {ms , mybotpic} = commandeOptions ;
+
+
+       let msg = `┏━━┛ Tech mob ┗━━┓\n\n`
+       
+      let topRanks = await getBottom10Users() ;
+        let mention = [] ;
+        for (const rank of topRanks ) {
+
+             const data = await get_level_exp(rank.xp) ;
+
+             let role ;
+    
+         if (data.level < 5) {
+            role = 'Nouveau né(e)'
+         } else if (data.level >= 5 && data.level < 10) {
+            role = 'kid ninja'
+         } else if ( data.level >= 10 && data.level < 15 ) {
+            role = 'Ninja-genin'
+         } else if ( data.level >= 15 && data.level < 20 ) {
+            role = 'Ninja-chunin'
+         } else if ( data.level >= 20 && data.level < 25 ) {
+            role = 'Ninja-jonin'
+         } else if ( data.level >= 25 && data.level < 30 ) {
+            role = 'ANBU'
+         } else if ( data.level >= 30 && data.level < 35 ) {
+            role = 'strong ninja'
+         } else if ( data.level >= 35 && data.level < 40 ) {
+            role = 'kage'
+         } else if ( data.level >= 40 && data.level < 45 ) {
+            role = 'Hermit seinin'
+         } else if ( data.level >= 45 && data.level < 50 ) {
+            role = 'Otsusuki'
+         } else {
+            role = 'level-GOD'
+         }
+            msg += `-----------------------
+            
+ *Name :* @${rank.jid.split("@")[0]}
+*Level :* ${data.level}
+*Role :* ${role}\n` ;
+
+        mention.push(rank.jid) ;
+        }
+
+       zk.sendMessage(dest,
+                      {
+
+                        caption : msg,
+                        mentions : mention
+                      ,contextInfo: {
+        forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'Tech mob project ',
+              serverMessageId: 143},
+        externalAdReply: {
+          title: "Daily Quote",
+          body: "Here's an inspiring quote to motivate you!",
+          thumbnailUrl: conf.URL,
+          sourceUrl: conf.GURL,
+          mediaType: 1,
+        
+        }
+      }
+    }, 
+                      {quoted : ms})
+       
+
+   });
+
+
+
 
 
    
