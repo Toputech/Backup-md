@@ -56,7 +56,7 @@ zokou({ nomCom: "bot", categorie: "General" }, async (dest, zk, commandeOptions)
           
           title: "Follow for updates 🩸",
       body: "Enjoy...",
-      thumbnailUrl:  {url : ppuser},
+      thumbnailUrl:  conf.URL,
           sourceUrl: conf.GURL,
           mediaType: 1,
           
