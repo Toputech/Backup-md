@@ -233,8 +233,8 @@ zokou( {
         externalAdReply: {
           title: "ALONE MD RANKED SUCCESSFULLY",
           body: "View channel for updates",
-          thumbnailUrl: conf.URL,
-          sourceUrl: {url : ppuser},
+          thumbnailUrl: {url : ppuser},
+          sourceUrl: conf.gurl,
           mediaType: 1,
         
         }
