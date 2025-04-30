@@ -154,7 +154,23 @@ zokou( {
             image : {url : ppuser},
             caption : msg,
             mentions : [auteurMsgRepondu]
-        },
+        ,contextInfo: {
+        forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'ALONE Queen MD V²',
+              serverMessageId: 143},
+        externalAdReply: {
+          title: "ALONE MD RANKED SUCCESSFULLY",
+          body: "View channel for updates",
+          thumbnailUrl: conf.URL,
+          sourceUrl: conf.GURL,
+          mediaType: 1,
+        
+        }
+      }
+    }, 
         {quoted : ms}
       )
 
