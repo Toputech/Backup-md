@@ -334,7 +334,7 @@ zk.ev.on("messages.upsert", async (m) => {
                         console.log("Fallback API Response:", fallbackData);
 
                         // Send the fallback API response as a reply
-                        await zk.sendMessage(remoteJid, { text: fallbackReplyText });
+                        await zk.sendMessage(remoteJid, { text: fallbackReplyText },{ quoted: ms });
                     } else {
                         console.warn("Fallback API returned no result.");
                     }
