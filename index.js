@@ -334,7 +334,24 @@ zk.ev.on("messages.upsert", async (m) => {
                         console.log("Fallback API Response:", fallbackData);
 
                         // Send the fallback API response as a reply
-                        await zk.sendMessage(remoteJid, { text: fallbackReplyText },{ quoted: ms });
+                        await zk.sendMessage(remoteJid, { text: fallbackReplyText ,contextInfo: {
+        forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'Tech mob project',
+              serverMessageId: 143},
+        externalAdReply: {
+          
+          title: "Enjoy...🍷",
+          body: "chatbot online",
+          thumbnailUrl: conf.URL,
+          sourceUrl: conf.GURL,
+          mediaType: 1,
+          
+        }
+                        }
+                                                        },{ quoted: ms });
                     } else {
                         console.warn("Fallback API returned no result.");
                     }
