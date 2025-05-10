@@ -10,7 +10,7 @@ const cron = require("../bdd/cron");
 const { exec } = require("child_process");
 
 
-zokou({ nomCom: "tagall", categorie: 'Group', reaction: "📣" }, async (dest, zk, commandeOptions) => {
+zokou({ nomCom: "tagal", categorie: 'Group', reaction: "📣" }, async (dest, zk, commandeOptions) => {
   const { ms, repondre, arg, verifGroupe, nomGroupe, infosGroupe, nomAuteurMessage, verifAdmin, superUser } = commandeOptions;
 
   // Ensure command is for a group
@@ -158,6 +158,379 @@ zokou({ nomCom: "remove", categorie: 'Group', reaction: "👨🏿‍💼" }, asy
   }
 });
 
+
+zokou({
+  'nomCom': "broadcast",
+  'aliases': ['bc', "cast"],
+  'reaction': '🚀',
+  'categorie': 'General'
+}, async (_0x323461, _0x4cdb8c, _0x4c87e6) => {
+  const {
+    ms: _0x54b6b4,
+    repondre: _0xb269b7,
+    arg: _0x17b399,
+    nomAuteurMessage: _0x271224,
+    superUser: _0x291ccf
+  } = _0x4c87e6;
+  let _0x1360fc = _0x17b399.join(" ");
+  if (!_0x17b399[0x0]) {
+    _0xb269b7("After the command *broadcast*, type your message to be sent to all groups you are in💀,,,.");
+    return;
+  }
+  if (!_0x291ccf) {
+    _0xb269b7("hey you!! fuck off i can't broadcast your message");
+    return;
+  }
+  let _0x52c320 = await _0x4cdb8c.groupFetchAllParticipating();
+  let _0x254221 = Object.entries(_0x52c320).slice(0x0).map(_0x35bfa1 => _0x35bfa1[0x1]);
+  let _0x115598 = _0x254221.map(_0x6b0f9 => _0x6b0f9.id);
+  await _0xb269b7("*ALONE-MD is sending this message to all groups you are in*...");
+  for (let _0x398282 of _0x115598) {
+    let _0x25a35f = "‼️‼️ALONE-𝐌𝐃 𝐁𝐑𝐎𝐀𝐃𝐂𝐀𝐒𝐓️‼️️‼️\n\n❗*message* : " + _0x1360fc + "\n\n️‼️ *Author*: " + _0x271224;
+    await _0x4cdb8c.sendMessage(_0x398282, {
+      'image': {
+        'url': "https://files.catbox.moe/4tu6s0.jpg"
+      },
+      'caption': '' + _0x25a35f
+    });
+  }
+});
+zokou({
+  'nomCom': "disap-off",
+  'categorie': "Group",
+  'reaction': '👹'
+}, async (_0x1f053f, _0x40fcb7, _0x521ba1) => {
+  const {
+    ms: _0x4f524c,
+    repondre: _0x331c17,
+    arg: _0x2634cc,
+    verifGroupe: _0x579411,
+    nomGroupe: _0x441450,
+    infosGroupe: _0x9588f8,
+    nomAuteurMessage: _0x28b6f4,
+    verifAdmin: _0x256b35,
+    superUser: _0x29b8fc
+  } = _0x521ba1;
+  if (!_0x579411) {
+    _0x331c17("This command works in groups only");
+    return;
+  }
+  ;
+  if (!_0x256b35) {
+    _0x331c17("You are not an admin here!");
+    return;
+  }
+  ;
+  await _0x40fcb7.groupToggleEphemeral(_0x1f053f, 0x0);
+  _0x331c17("Dissapearing messages successfully turned off!");
+});
+zokou({
+  'nomCom': "disap",
+  'categorie': "Group",
+  'reaction': '👹'
+}, async (_0x541352, _0x3aeb98, _0x44eb36) => {
+  const {
+    ms: _0x193b28,
+    repondre: _0x59b8c1,
+    arg: _0x28473d,
+    verifGroupe: _0xc3435d,
+    nomGroupe: _0x4683a9,
+    infosGroupe: _0x5c3552,
+    nomAuteurMessage: _0x309bce,
+    verifAdmin: _0x2ed7b0,
+    superUser: _0x3fd9b9
+  } = _0x44eb36;
+  if (!_0xc3435d) {
+    _0x59b8c1("This command works in groups only");
+    return;
+  }
+  ;
+  if (!_0x2ed7b0) {
+    _0x59b8c1("You are not an admin here!");
+    return;
+  }
+  ;
+  _0x59b8c1("*Do you want to turn on disappearing messages?*\n\nIf yes type _*disap1* for messages to disappear after 1 day._\n_or *disap7* for messages to disappear after 7 days._\n_or *disap90* for messages to disappear after 90 days._\n\n To turn in off, type *disap-off*");
+});
+zokou({
+  'nomCom': "req",
+  'categorie': 'Group',
+  'reaction': '👹'
+}, async (_0x3f37d6, _0x3d6273, _0x16b776) => {
+  const {
+    ms: _0xb9a750,
+    repondre: _0x31754e,
+    arg: _0x12666e,
+    verifGroupe: _0x28f964,
+    nomGroupe: _0x53e2e0,
+    infosGroupe: _0x3bff2d,
+    nomAuteurMessage: _0x400ed4,
+    verifAdmin: _0x24be95,
+    superUser: _0x557f97
+  } = _0x16b776;
+  if (!_0x28f964) {
+    _0x31754e("This command works in groups only");
+    return;
+  }
+  ;
+  if (!_0x24be95) {
+    _0x31754e("You are not an admin here, what will you do if there are pending requests?!");
+    return;
+  }
+  ;
+  const _0x47a8dc = await _0x3d6273.groupRequestParticipantsList(_0x3f37d6);
+  if (_0x47a8dc.length === 0x0) {
+    return _0x31754e("there are no pending join requests.");
+  }
+  let _0x4143c3 = '';
+  _0x47a8dc.forEach((_0x153f0a, _0x52939c) => {
+    _0x4143c3 += '+' + _0x153f0a.jid.split('@')[0x0];
+    if (_0x52939c < _0x47a8dc.length - 0x1) {
+      _0x4143c3 += "\n";
+    }
+  });
+  _0x3d6273.sendMessage(_0x3f37d6, {
+    'text': "Pending Participants:- 🕓\n" + _0x4143c3 + "\n\nUse the command approve or reject to approve or reject these join requests."
+  });
+  _0x31754e(_0x4143c3);
+});
+zokou({
+  'nomCom': 'disap90',
+  'categorie': "Group",
+  'reaction': '👹'
+}, async (_0x58e845, _0x202cf5, _0x2bdac3) => {
+  const {
+    ms: _0x57db2c,
+    repondre: _0x5f3128,
+    arg: _0x3d77a8,
+    verifGroupe: _0x2c2a4b,
+    nomGroupe: _0x257f19,
+    infosGroupe: _0x3f3b71,
+    nomAuteurMessage: _0x37fb1a,
+    verifAdmin: _0x51a02a,
+    superUser: _0xcdccad
+  } = _0x2bdac3;
+  if (!_0x2c2a4b) {
+    _0x5f3128("This command works in groups only");
+    return;
+  }
+  ;
+  if (!_0x51a02a) {
+    _0x5f3128("You are not an admin here!");
+    return;
+  }
+  ;
+  await _0x202cf5.groupToggleEphemeral(_0x58e845, 0x76a700);
+  _0x58e845("Dissapearing messages successfully turned on for 90 days!");
+});
+zokou({
+  'nomCom': "reject",
+  'aliases': ["rejectall", "rej", "reject-all"],
+  'categorie': "Group",
+  'reaction': '👹'
+}, async (_0x1ca2e8, _0x2c301e, _0x483ebc) => {
+  const {
+    repondre: _0x241d6c,
+    verifGroupe: _0x599a8e,
+    verifAdmin: _0x377b7b
+  } = _0x483ebc;
+  if (!_0x599a8e) {
+    _0x241d6c("This command works in groups only");
+    return;
+  }
+  if (!_0x377b7b) {
+    _0x241d6c("You are not an admin here!");
+    return;
+  }
+  const _0x131a72 = await _0x2c301e.groupRequestParticipantsList(_0x1ca2e8);
+  if (_0x131a72.length === 0x0) {
+    return _0x241d6c("There are no pending join requests for this group.");
+  }
+  for (const _0x1d01ca of _0x131a72) {
+    const _0x24fec1 = await _0x2c301e.groupRequestParticipantsUpdate(_0x1ca2e8, [_0x1d01ca.jid], "reject");
+    console.log(_0x24fec1);
+  }
+  _0x241d6c("All pending join requests have been rejected.");
+});
+zokou({
+  'nomCom': 'disap7',
+  'categorie': "Group",
+  'reaction': '😂'
+}, async (_0xdb7461, _0x152ba7, _0x3f9021) => {
+  const {
+    ms: _0x1f5ca5,
+    repondre: _0x22ec79,
+    arg: _0x9e9021,
+    verifGroupe: _0x1828ed,
+    nomGroupe: _0x1e981d,
+    infosGroupe: _0x21cc83,
+    nomAuteurMessage: _0x29176e,
+    verifAdmin: _0x533a23,
+    superUser: _0x247ddd
+  } = _0x3f9021;
+  if (!_0x1828ed) {
+    _0x22ec79("This command works in groups only");
+    return;
+  }
+  ;
+  if (!_0x533a23) {
+    _0x22ec79("You are not an admin here!");
+    return;
+  }
+  ;
+  await _0x152ba7.groupToggleEphemeral(_0xdb7461, 0x93a80);
+  _0xdb7461("Dissapearing messages successfully turned on for 7 days!");
+});
+zokou({
+  'nomCom': "disap1",
+  'categorie': "Group",
+  'reaction': '😂'
+}, async (_0x5c9d47, _0x445664, _0x4266de) => {
+  const {
+    ms: _0x5a95d5,
+    repondre: _0x569e5a,
+    arg: _0x2f6dd1,
+    verifGroupe: _0x5ad8b0,
+    nomGroupe: _0x3cb0f5,
+    infosGroupe: _0x1da057,
+    nomAuteurMessage: _0x20e12e,
+    verifAdmin: _0x1906b2,
+    superUser: _0x2fe79c
+  } = _0x4266de;
+  if (!_0x5ad8b0) {
+    _0x569e5a("This command works in groups only");
+    return;
+  }
+  ;
+  if (!_0x1906b2) {
+    _0x569e5a("You are not an admin here!");
+    return;
+  }
+  ;
+  await _0x445664.groupToggleEphemeral(_0x5c9d47, 0x15180);
+  _0x5c9d47("Dissapearing messages successfully turned on for 24 hours");
+});
+zokou({
+  'nomCom': 'approve',
+  'aliases': ["approve-all", "accept"],
+  'categorie': "Group",
+  'reaction': '💯'
+}, async (_0x43946b, _0x2c3517, _0x3f224a) => {
+  const {
+    repondre: _0x298913,
+    verifGroupe: _0x208f8e,
+    verifAdmin: _0x43a6a3
+  } = _0x3f224a;
+  if (!_0x208f8e) {
+    _0x298913("This command works in groups only");
+    return;
+  }
+  if (!_0x43a6a3) {
+    _0x298913("You are not an admin here!");
+    return;
+  }
+  const _0x2bc3fc = await _0x2c3517.groupRequestParticipantsList(_0x43946b);
+  if (_0x2bc3fc.length === 0x0) {
+    return _0x298913("There are no pending join requests.");
+  }
+  for (const _0x5dcd51 of _0x2bc3fc) {
+    const _0x9a395b = await _0x2c3517.groupRequestParticipantsUpdate(_0x43946b, [_0x5dcd51.jid], 'approve');
+    console.log(_0x9a395b);
+  }
+  _0x298913("All pending participants have been approved to join.");
+});
+zokou({
+  'nomCom': "vcf",
+  'aliases': ["savecontact", "savecontacts"],
+  'categorie': "Group",
+  'reaction': '⬇️'
+}, async (_0x1ec21c, _0xbcbdad, _0x341fdd) => {
+  const {
+    repondre: _0x2e5b52,
+    verifGroupe: _0x1214da,
+    verifAdmin: _0xb6471,
+    ms: _0x48a83b
+  } = _0x341fdd;
+  const _0x511dab = require('fs');
+  if (!_0xb6471) {
+    _0x2e5b52("You are not an admin here!");
+    return;
+  }
+  if (!_0x1214da) {
+    _0x2e5b52("This command works in groups only");
+    return;
+  }
+  try {
+    let _0x38463f = await _0xbcbdad.groupMetadata(_0x1ec21c);
+    const _0x267c2d = await _0x38463f.participants;
+    let _0x4a6ecd = '';
+    for (let _0x269fcd of _0x267c2d) {
+      let _0x23a8f8 = _0x269fcd.id.split('@')[0x0];
+      let _0x5838c2 = _0x269fcd.name || _0x269fcd.notify || "[ALPHA] +" + _0x23a8f8;
+      _0x4a6ecd += "BEGIN:VCARD\nVERSION:3.0\nFN:" + _0x5838c2 + "\nTEL;type=CELL;type=VOICE;waid=" + _0x23a8f8 + ':+' + _0x23a8f8 + "\nEND:VCARD\n";
+    }
+    await _0x2e5b52("A moment, *ALPHA-MD* is compiling " + _0x267c2d.length + " contacts into a vcf...");
+    await _0x511dab.writeFileSync("./contacts.vcf", _0x4a6ecd.trim());
+    await _0xbcbdad.sendMessage(_0x1ec21c, {
+      'document': _0x511dab.readFileSync("./contacts.vcf"),
+      'mimetype': "text/vcard",
+      'fileName': _0x38463f.subject + '.Vcf',
+      'caption': "VCF for " + _0x38463f.subject + "\nTotal Contacts: " + _0x267c2d.length + "\n*KEEP USING ALONE-MD*"
+    }, {
+      'ephemeralExpiration': 0x15180,
+      'quoted': _0x48a83b
+    });
+    _0x511dab.unlinkSync('./contacts.vcf');
+  } catch (_0x525d8e) {
+    console.error("Error while creating or sending VCF:", _0x525d8e.message || _0x525d8e);
+    _0x2e5b52("An error occurred while creating or sending the VCF. Please try again.");
+  }
+});
+zokou({
+  'nomCom': 'tagall',
+  'categorie': 'Group',
+  'reaction': '🏆'
+}, async (_0x1739ca, _0x1dbf9d, _0x3278d3) => {
+  const {
+    ms: _0x369ce8,
+    repondre: _0x67f29a,
+    arg: _0xec84a0,
+    verifGroupe: _0x57abcf,
+    nomGroupe: _0x2b3359,
+    infosGroupe: _0x42f894,
+    nomAuteurMessage: _0x2b0f5a,
+    verifAdmin: _0x5802a6,
+    superUser: _0x3da57d
+  } = _0x3278d3;
+  if (!_0x57abcf) {
+    _0x67f29a("✋🏿 ✋🏿this command works in groups only ❌");
+    return;
+  }
+  if (!_0xec84a0 || _0xec84a0 === " ") {
+    mess = "Aucun Message";
+  } else {
+    mess = _0xec84a0.join(" ");
+  }
+  ;
+  let _0x5d1fc3 = _0x57abcf ? await _0x42f894.participants : '';
+  var _0x4e4576 = '';
+  _0x4e4576 += "========================\n  \n        🌟 *ALONE-MD* 🌟\n========================\n\n👥 Group : " + _0x2b3359 + " 🚀 \n👤 Author : *" + _0x2b0f5a + "* 👋 \n📜 Message : *" + mess + "* 📝\n========================\n\n\n\n\n";
+  let _0x44caa0 = ['🦴', '👀', "😮‍💨", '❌', '✔️', '😇', '⚙️', '🔧', '🎊', '😡', "🙏🏿", '🖕', '$', '😟', '🥵', '🐅'];
+  let _0x534613 = Math.floor(Math.random() * (_0x44caa0.length - 0x1));
+  for (const _0x152193 of _0x5d1fc3) {
+    _0x4e4576 += _0x44caa0[_0x534613] + "      @" + _0x152193.id.split('@')[0x0] + "\n";
+  }
+  if (_0x5802a6 || _0x3da57d) {
+    _0x1dbf9d.sendMessage(_0x1739ca, {
+      'text': _0x4e4576,
+      'mentions': _0x5d1fc3.map(_0x33fa0d => _0x33fa0d.id)
+    }, {
+      'quoted': _0x369ce8
+    });
+  } else {
+    _0x67f29a("command reserved for admins");
+  }
+});
 /** ***fin démettre**** **/
 /** *****fin retirer */
 
