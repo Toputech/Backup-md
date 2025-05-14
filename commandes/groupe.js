@@ -1253,3 +1253,121 @@ zokou({
     repondre('You must enter "on" or "off"');
   }
 });
+zokou({
+  'nomCom': "antiword",
+  'categorie': 'Group',
+  'reaction': '🔗'
+}, async (_0x22f58b, _0x4939d7, _0x4e7551) => {
+  var {
+    repondre: _0x2be765,
+    arg: _0x95d0ab,
+    verifGroupe: _0x4f0817,
+    superUser: _0x1f04d1,
+    verifAdmin: _0x177ce1
+  } = _0x4e7551;
+  if (!_0x4f0817) {
+    return _0x2be765("*This command is for groups only*");
+  }
+  if (_0x1f04d1 || _0x177ce1) {
+    const _0x547558 = await verifierEtatJid(_0x22f58b);
+    try {
+      if (!_0x95d0ab || !_0x95d0ab[0x0] || _0x95d0ab === " ") {
+        _0x2be765("antiword on to activate the anti-word feature\nantiword off to deactivate the anti-word feature\nantiword action/remove to directly remove the sender without notice\nantiword action/warn to give warnings\nantiword action/delete to remove the word without any sanctions\n\nPlease note that by default, the anti-word feature is set to delete.");
+        return;
+      }
+      ;
+      if (_0x95d0ab[0x0] === 'on') {
+        if (_0x547558) {
+          _0x2be765("the antiword is already activated for this group");
+        } else {
+          await ajouterOuMettreAJourJid(_0x22f58b, "oui");
+          _0x2be765("the antiword is activated successfully");
+        }
+      } else {
+        if (_0x95d0ab[0x0] === "off") {
+          if (_0x547558) {
+            await ajouterOuMettreAJourJid(_0x22f58b, "non");
+            _0x2be765("The antiword has been successfully deactivated");
+          } else {
+            _0x2be765("antiword is not activated for this group");
+          }
+        } else {
+          if (_0x95d0ab.join('').split('/')[0x0] === 'action') {
+            let _0x77788f = _0x95d0ab.join('').split('/')[0x1].toLowerCase();
+            if (_0x77788f == 'remove' || _0x77788f == "warn" || _0x77788f == "delete") {
+              await mettreAJourAction(_0x22f58b, _0x77788f);
+              _0x2be765("The anti-word action has been updated to " + _0x95d0ab.join('').split('/')[0x1]);
+            } else {
+              _0x2be765("The only actions available are warn, remove, and delete");
+            }
+          } else {
+            _0x2be765("antiword on to activate the anti-word feature\nantiword off to deactivate the anti-word feature\nantiword action/remove to directly remove the word sender without notice\nantiword action/warn to give warnings\nantiword action/delete to remove the word without any sanctions\n\nPlease note that by default, the anti-word feature is set to delete.");
+          }
+        }
+      }
+    } catch (_0x22a8b1) {
+      _0x2be765(_0x22a8b1);
+    }
+  } else {
+    _0x2be765("You are not entitled to this order");
+  }
+});
+zokou({
+  'nomCom': "antilink-all",
+  'categorie': "Group",
+  'reaction': '🔗'
+}, async (_0x18daac, _0x290184, _0x4bd034) => {
+  const {
+    repondre: _0x71952,
+    arg: _0x4c86b9,
+    verifGroupe: _0x28df8c,
+    superUser: _0x47db3b,
+    verifAdmin: _0x2b18e5
+  } = _0x4bd034;
+  if (!_0x28df8c) {
+    return _0x71952("*This Command works in Groups Only*");
+  }
+  if (_0x47db3b || _0x2b18e5) {
+    const _0x4ffabd = await verifierEtatJid(_0x18daac);
+    try {
+      if (!_0x4c86b9 || !_0x4c86b9[0x0].trim()) {
+        _0x71952("Type `antilink-all on` to activate the antilink-all feature\nor `antilink-all off` to deactivate the antilink-all feature\nThen `antilink-all action/remove` to directly remove the link without notice\nor `antilink-all action/warn` to give warnings\nor `antilink-all action/delete` to remove the link without any sanctions\n\nPlease note that by default, the antilink-all feature is set to delete.");
+        return;
+      }
+      const [_0x145c89, _0x261fa8] = _0x4c86b9.join(" ").split('/');
+      if (_0x145c89 === 'on') {
+        if (_0x4ffabd) {
+          _0x71952("Antilink-all is already activated for this group.");
+        } else {
+          await ajouterOuMettreAJourJid(_0x18daac, "oui");
+          _0x71952("The antilink-all feature has been activated successfully.");
+        }
+      } else {
+        if (_0x145c89 === "off") {
+          if (_0x4ffabd) {
+            await ajouterOuMettreAJourJid(_0x18daac, "non");
+            _0x71952("The antilink-all feature has been successfully deactivated.");
+          } else {
+            _0x71952("Antilink-all is not activated for this group.");
+          }
+        } else {
+          if (_0x145c89 === 'action') {
+            const _0x38775d = _0x261fa8.toLowerCase();
+            if (["remove", "warn", "delete"].includes(_0x38775d)) {
+              await mettreAJourAction(_0x18daac, _0x38775d);
+              _0x71952("The anti-link action has been updated to " + _0x38775d + '.');
+            } else {
+              _0x71952("The only actions available are `warn`, `remove`, and `delete`.");
+            }
+          } else {
+            _0x71952("Type `antilink-all on` to activate the antilink-all feature\nor `antilink-all off` to deactivate the antilink-all feature\nor `antilink-all action/remove` to directly remove the link without notice\nor `antilink-all action/warn` to give warnings\nor `antilink-all action/delete` to remove the link without any sanctions\n\nPlease note that by default, the antilink-all feature is set to delete.\n\n*KEEP USING ALPHA-MD*");
+          }
+        }
+      }
+    } catch (_0x5483c0) {
+      _0x71952("Error: " + _0x5483c0.message);
+    }
+  } else {
+    _0x71952("You are not allowed to use this command.");
+  }
+});
