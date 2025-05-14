@@ -1371,3 +1371,25 @@ zokou({
     _0x71952("You are not allowed to use this command.");
   }
 });
+zokou({
+  'nomCom': 'revoke',
+  'categorie': 'Group'
+}, async (_0x5cf31f, _0x499fc5, _0x27df3d) => {
+  const {
+    arg: _0x1cbe7c,
+    repondre: _0x1e4f60,
+    verifGroupe: _0x5201ec,
+    verifAdmin: _0x5ad84b
+  } = _0x27df3d;
+  if (!_0x5ad84b) {
+    _0x1e4f60("for admins.");
+    return;
+  }
+  ;
+  if (!_0x5201ec) {
+    _0x1e4f60("This command is only allowed in groups.");
+  }
+  ;
+  await _0x499fc5.groupRevokeInvite(_0x5cf31f);
+  _0x1e4f60("group link revoked.");
+});
