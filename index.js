@@ -1292,9 +1292,9 @@ ${metadata.desc}\n\n> POWERED BY TOPU TECH.`;
   };
 
   // Send the audio message with the context of the original message
-  await zk.sendMessage(dest, audioMessage, );
+  await zk.sendMessage(group.id, audioMessage, );
 
-            zk.sendMessage(group.id, { image: { url: ppgroup }, caption: msg, mentions: membres });
+            zk.sendMessage(group.id, caption: msg, mentions: membres });
         } else if (group.action == 'remove' && (await recupevents(group.id, "goodbye") == 'on')) {
             let msg = `one or somes member(s) left group;\n`;
 
