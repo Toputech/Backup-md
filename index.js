@@ -105,16 +105,6 @@ setTimeout(() => {
                 };
             }
             ///////
-            getMessage: async (key) => {
-                if (store) {
-                    const msg = await store.loadMessage(key.remoteJid, key.id, undefined);
-                    return msg.message || undefined;
-                }
-                return {
-                    conversation: 'An Error Occurred, Repeat Command!'
-                };
-            }
-            ///////
         };
         const zk = (0, baileys_1.default)(sockOptions);
         store.bind(zk.ev);
