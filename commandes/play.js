@@ -13,12 +13,14 @@ zokou({
   const repondre = async (text) => {
     await sock.sendMessage(jid, {
       text,
-      contextInfo: {forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363295141350550@newsletter',
-              newsletterName: 'ALONE Queen MD V²',
-              serverMessageId: 143},
+      contextInfo: {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: '120363295141350550@newsletter',
+          newsletterName: 'ALONE Queen MD V²',
+          serverMessageId: 143
+        },
         externalAdReply: {
           title: "🎵 ALONE MD LYRICS FINDER",
           body: "Powered by ALONE MD V²",
@@ -36,37 +38,59 @@ zokou({
 
   const query = arg.join(" ");
 
-  try {
-    const res = await axios.get(`https://some-random-api.com/lyrics?title=${encodeURIComponent(query)}`);
-    const lyricsData = res.data;
+  // List of fallback APIs
+  const apiList = [
+    `https://some-random-api.ml/lyrics?title=${encodeURIComponent(query)}`,
+    `https://api.lyrics.ovh/v1/${encodeURIComponent(query.split(" ")[0])}/${encodeURIComponent(query)}`,
+    `https://lyrist.vercel.app/api/${encodeURIComponent(query)}`,
+    `https://api.song.link/v1-alpha.1/links?title=${encodeURIComponent(query)}`,
+    `https://api.popcat.xyz/lyrics?song=${encodeURIComponent(query)}`
+  ];
 
-    const title = lyricsData.title || query;
-    const author = lyricsData.author || "Unknown Artist";
-    const lyrics = lyricsData.lyrics.slice(0, 4096); // trim long lyrics to avoid message limits
+  let lyricsData = null;
+  let source = null;
 
-    const message = `*🎵 Title:* ${title}\n*👤 Artist:* ${author}\n\n${lyrics}`;
-
-    await sock.sendMessage(jid, {
-      image: { url: lyricsData.thumbnail.genius },
-      caption: message,
-      contextInfo: {
-        externalAdReply: {
-          title: title,
-          body: `By ${author}`,
-          mediaType: 1,
-          thumbnailUrl: lyricsData.thumbnail.genius,
-          sourceUrl: lyricsData.links.genius,
-          renderLargerThumbnail: true,
-          showAdAttribution: false,
-        },
-      },
-    }, { quoted: ms });
-
-  } catch (err) {
-    console.error("Lyrics fetch error:", err.message);
-    return repondre("Failed to fetch lyrics. Try using a more specific song title.");
+  for (const url of apiList) {
+    try {
+      const res = await axios.get(url);
+      if (res.data && (res.data.lyrics || res.data.result || res.data.content)) {
+        lyricsData = res.data;
+        source = url;
+        break;
+      }
+    } catch (err) {
+      continue;
+    }
   }
+
+  if (!lyricsData) return repondre("Couldn't find lyrics from any source. Try again later or with a different song.");
+
+  let title = lyricsData.title || query;
+  let author = lyricsData.author || lyricsData.artist || "Unknown Artist";
+  let lyrics = lyricsData.lyrics || lyricsData.result?.lyrics || lyricsData.content || "Lyrics not available.";
+  lyrics = lyrics.slice(0, 4096);
+  const thumbnail = lyricsData.thumbnail?.genius || "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg";
+  const link = lyricsData.links?.genius || lyricsData.url || "https://github.com/Zokou1/ALONE-MD";
+
+  const message = `*🎵 Title:* ${title}\n*👤 Artist:* ${author}\n\n${lyrics}`;
+
+  await sock.sendMessage(jid, {
+    image: { url: thumbnail },
+    caption: message,
+    contextInfo: {
+      externalAdReply: {
+        title: title,
+        body: `By ${author}`,
+        mediaType: 1,
+        thumbnailUrl: thumbnail,
+        sourceUrl: link,
+        renderLargerThumbnail: false,
+        showAdAttribution: false,
+      },
+    },
+  }, { quoted: ms });
 });
+
 zokou({
   nomCom: "movie",
   aliases: ["getmovie", "moviedl"],
