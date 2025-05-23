@@ -1,16 +1,23 @@
-const { zokou } = require("../framework/zokou");
+const { zokou, superUser } = require("../framework/zokou"); // Assuming superUser is exported
 
 zokou({
   nomCom: "sendall",
   categorie: "Group",
   reaction: "✉️",
 }, async (jid, sock, data) => {
-  const { ms, arg } = data;
+  const { ms, arg, groupMetadata, isGroup } = data;
 
   const replyWithContext = (text) =>
     sock.sendMessage(jid, {
       text,
       contextInfo: {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: "120363295141350550@newsletter",
+          newsletterName: "ALONE Queen MD V²",
+          serverMessageId: 143,
+        },
         externalAdReply: {
           title: "ALONE MD V²",
           body: "Group Broadcast",
@@ -19,70 +26,68 @@ zokou({
           sourceUrl: "https://youtube.com/@alone-bot",
           renderLargerThumbnail: true,
           showAdAttribution: false,
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363295141350550@newsletter',
-            newsletterName: 'ALONE MD V²',
-            serverMessageId: 143
-          }
         },
       },
     }, { quoted: ms });
 
-  // Fetch group metadata if not provided
-  let groupMeta = data.groupMetadata;
-  if (!groupMeta) {
+  if (!isGroup) return replyWithContext("This command can only be used in a group.");
+
+  const senderId = ms.key.participant || ms.key.remoteJid;
+  const isSuperUser = superUser.includes(senderId);
+
+  let metadata = groupMetadata;
+  if (!metadata) {
     try {
-      groupMeta = await sock.groupMetadata(jid);
-    } catch (e) {
-      return replyWithContext("Couldn't fetch group data.");
+      metadata = await sock.groupMetadata(jid);
+    } catch {
+      return replyWithContext("Couldn't fetch group metadata.");
     }
   }
 
-  const groupJid = groupMeta?.id || jid;
-  const isGroup = groupJid.endsWith("@g.us");
+  const admins = metadata.participants
+    .filter(p => p.admin !== null)
+    .map(p => p.id);
 
-  if (!isGroup) return replyWithContext("This command can only be used in a group.");
+  const isAdmin = admins.includes(senderId);
+
+  if (!isSuperUser && !isAdmin) {
+    return replyWithContext("Only group admins or super users can use this command.");
+  }
+
   if (!Array.isArray(arg) || !arg.length) return replyWithContext("Please provide a message to send.");
-  if (!groupMeta.participants) return replyWithContext("Couldn't fetch group data.");
 
   const textToSend = arg.join(" ");
-  const senderId = ms.pushName || "Someone";
-
-  const botIdPrefix = sock.user?.id?.split(":")[0] || "";
-  const members = groupMeta.participants
-    .map(p => p.id)
-    .filter(id => !id.startsWith(botIdPrefix));
+  const members = metadata.participants.map(p => p.id);
 
   let failedCount = 0;
 
   for (const member of members) {
+    if (member === sock.user.id) continue;
     try {
       await sock.sendMessage(member, {
-        text: `*Message from group ${groupMeta.subject}*\n\n${textToSend}`,
+        text: `*Message from group ${metadata.subject}*\n\n${textToSend}`,
         contextInfo: {
+          forwardingScore: 999,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: "120363295141350550@newsletter",
+            newsletterName: "ALONE MD V²",
+            serverMessageId: 143,
+          },
           externalAdReply: {
             title: "Group Broadcast",
-            body: `From ${senderId}`,
+            body: `From ${ms.pushName || "Admin"}`,
             mediaType: 1,
-            renderLargerThumbnail: true,
+            renderLargerThumbnail: false,
             showAdAttribution: false,
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363295141350550@newsletter',
-              newsletterName: 'ALONE MD V²',
-              serverMessageId: 143
-            }
           },
         },
       });
       await new Promise(r => setTimeout(r, 1000));
-    } catch (err) {
+    } catch {
       failedCount++;
     }
   }
 
-  return replyWithContext(`Sent message to ${members.length - failedCount} members. Failed to send to ${failedCount} members.`);
+  return replyWithContext(`Sent message to ${members.length - failedCount} members. Failed: ${failedCount}`);
 });
