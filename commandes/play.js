@@ -2,7 +2,6 @@ const { zokou } = require("../framework/zokou");
 const axios = require("axios");
 const ytSearch = require("yt-search");
 
-
 zokou(
   {
     nomCom: "movie",
@@ -14,30 +13,7 @@ zokou(
     const { arg, ms } = data;
 
     const repondre = async (text) => {
-      await sock.sendMessage(
-        jid,
-        {
-          text,
-          contextInfo: {
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: "120363295141350550@newsletter",
-              newsletterName: "ALONE Queen MD V²",
-              serverMessageId: 143,
-            },
-            externalAdReply: {
-              title: "Movie Finder",
-              body: "Powered by ALONE MD V²",
-              thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
-              sourceUrl: "https://github.com/Zokou1/ALONE-MD",
-              mediaType: 1,
-              renderLargerThumbnail: false,
-            },
-          },
-        },
-        { quoted: ms }
-      );
+      await sock.sendMessage(jid, { text }, { quoted: ms });
     };
 
     if (!arg[0]) return repondre("Please provide a movie title.");
@@ -58,70 +34,41 @@ zokou(
       const detailsRes = await axios.get(detailsUrl);
       const movie = detailsRes.data;
 
-      let caption = `*🎬 Title:* ${movie.Title}\n*📅 Year:* ${movie.Year}\n*⭐ Rating:* ${movie.imdbRating}/10\n*📖 Plot:* ${movie.Plot}`;
-
-      // YTS Torrent Links
-      try {
-        const ytsRes = await axios.get(`https://yts.mx/api/v2/list_movies.json?query_term=${encodeURIComponent(movie.Title)}`);
-        const ytsData = ytsRes.data;
-
-        if (ytsData.data.movie_count > 0) {
-          const ytsMovie = ytsData.data.movies[0];
-          const torrents = ytsMovie.torrents;
-
-          const ytsLinks = torrents.map(t => `• *${t.quality} ${t.type}* - [Download](${t.url})`).join("\n");
-
-          caption += `\n\n*🧲 YTS Torrents:*\n${ytsLinks}`;
-        }
-      } catch (e) {
-        console.log("YTS fetch error:", e.message);
+      // Trailer Search
+      const ytResult = await ytSearch(`${movie.Title} trailer`);
+      if (!ytResult.videos || ytResult.videos.length === 0) {
+        return repondre("No trailer found on YouTube.");
       }
 
-      // Extra links
-      const safeTitle = encodeURIComponent(movie.Title);
-      caption += `
+      const trailerVideo = ytResult.videos[0];
+      const trailerUrl = trailerVideo.url;
 
-*🌐 More Options:*
-- [IMDb](https://www.imdb.com/title/${movie.imdbID})
-- [Watch on JustWatch](https://www.justwatch.com/us/search?q=${safeTitle})
-- [YouTube Trailer](https://www.youtube.com/results?search_query=${safeTitle}+trailer)
-- [Search on YTS](https://yts.mx/browse-movies/${safeTitle})`;
+      try {
+        const res = await axios.get(`https://api.vevioz.com/api/button/mp4?url=${trailerUrl}`);
+        const match = res.data.match(/href="(https:\/\/[^"]+\.mp4)"/);
 
-      // Poster fallback
-      const posterUrl = movie.Poster !== "N/A"
-        ? movie.Poster
-        : "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg";
+        if (!match) {
+          return repondre("Failed to retrieve trailer download link.");
+        }
 
-      // Send final result
-      await sock.sendMessage(
-        jid,
-        {
-          image: { url: posterUrl },
-          caption,
-          contextInfo: {
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: "120363295141350550@newsletter",
-              newsletterName: "ALONE Queen MD V²",
-              serverMessageId: 143,
-            },
-            externalAdReply: {
-              title: movie.Title,
-              body: "Tap for streaming/download options",
-              thumbnailUrl: posterUrl,
-              sourceUrl: `https://www.imdb.com/title/${movie.imdbID}`,
-              mediaType: 1,
-              renderLargerThumbnail: true,
-            },
+        const videoDownloadUrl = match[1];
+
+        await sock.sendMessage(
+          jid,
+          {
+            video: { url: videoDownloadUrl },
+            caption: `🎬 *${movie.Title}* (${movie.Year})\n⭐ *IMDb:* ${movie.imdbRating}/10\n\n📖 *Plot:* ${movie.Plot}`,
           },
-        },
-        { quoted: ms }
-      );
+          { quoted: ms }
+        );
+      } catch (e) {
+        console.log("Trailer download error:", e.message);
+        await repondre("Trailer download failed.");
+      }
 
     } catch (err) {
       console.error("Movie fetch error:", err.message);
-      return repondre("Failed to fetch movie info. Try again later.");
+      return repondre("Could not fetch movie data.");
     }
   }
 );
