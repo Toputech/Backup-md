@@ -24,7 +24,7 @@ zokou({
           thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
           sourceUrl: "https://github.com/Zokou1/ALONE-MD",
           mediaType: 1,
-          renderLargerThumbnail: true,
+          renderLargerThumbnail: false,
         },
       },
     }, { quoted: ms });
@@ -34,7 +34,7 @@ zokou({
   const query = arg.join(" ");
 
   try {
-    const searchUrl = `https://api.xyroinee.xyz/api/sdmovie?search=${encodeURIComponent(query)}&apikey=xyroinee`;
+    const searchUrl = `http://www.omdbapi.com/?i=tt3896198&apikey=38f19ae1`;
     const res = await axios.get(searchUrl);
     const result = res.data;
 
