@@ -167,18 +167,44 @@ zokou({
   categorie: "Search",
   reaction: "⬇️",
 }, async (jid, sock, data) => {
-  const { arg, ms, repondre } = data;
+  const { arg, ms } = data;
 
-  if (!arg[0]) return repondre("Please provide a video name.");
+  const repondre = async (text) => {
+    await sock.sendMessage(jid, {
+      text,
+      contextInfo: {forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'ALONE Queen MD V²',
+              serverMessageId: 143},
+        externalAdReply: {
+          title: "♻️ ALONE MD AUDIO DOWNLOADER ♻️",
+          body: "Powered by ALONE MD V²",
+          thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+          sourceUrl: "https://github.com/Zokou1/ALONE-MD",
+          mediaType: 1,
+          renderLargerThumbnail: false,
+          showAdAttribution: false,
+        },
+      },
+    }, { quoted: ms });
+  };
+
+  if (!arg[0]) return repondre("Please provide a Audio name.");
   const query = arg.join(" ");
 
   try {
     const results = await ytSearch(query);
     if (!results || !results.videos.length)
-      return repondre("No video found for the specified query.");
+      return repondre("No audio found for the specified query.");
 
     const video = results.videos[0];
     const videoUrl = video.url;
+    const title = video.title;
+
+    // Attempt to split title into artist and song
+    const [artist, songTitle] = title.includes(" - ") ? title.split(" - ", 2) : ["Unknown Artist", title];
 
     await sock.sendMessage(jid, { text: "```Downloading....```" }, { quoted: ms });
 
@@ -198,15 +224,15 @@ zokou({
 
     if (!response.success) return repondre("All sources failed. Try again later.");
 
-    const { title, download_url, thumbnail } = response.result;
+    const { download_url, thumbnail } = response.result;
 
     await sock.sendMessage(jid, {
       audio: { url: download_url },
       mimetype: "audio/mp4",
       contextInfo: {
         externalAdReply: {
-          title: "♻️ALONE MD AUDIO DOWNLOADER ♻️",
-          body: "Tap to open",
+          title: "♻️ ALONE MD AUDIO DOWNLOADER ♻️",
+          body: `🎵 ${artist} - ${songTitle}`,
           mediaType: 1,
           thumbnailUrl: thumbnail,
           sourceUrl: videoUrl,
