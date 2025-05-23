@@ -73,91 +73,101 @@ const stickers = [
 
 /** ***fin démettre**** **/
 /** **retirer** */
-zokou({ nomCom: "remove", categorie: 'Group', reaction: "👨🏿‍💼" }, async (dest, zk, commandeOptions) => {
-  let { repondre, msgRepondu, infosGroupe, auteurMsgRepondu, verifGroupe, nomAuteurMessage, auteurMessage, superUser, idBot } = commandeOptions;
-  let membresGroupe = verifGroupe ? await infosGroupe.participants : "";
-  if (!verifGroupe) { return repondre("for groups only"); }
+zokou({ nomCom: "remove", categorie: "Group", reaction: "👨🏿‍💼" }, async (dest, zk, commandeOptions) => {
+  let {
+    msgRepondu,
+    infosGroupe,
+    auteurMsgRepondu,
+    verifGroupe,
+    nomAuteurMessage,
+    auteurMessage,
+    superUser,
+    idBot
+  } = commandeOptions;
 
-  const verifMember = (user) => {
-    for (const m of membresGroupe) {
-      if (m.id !== user) continue;
-      else return true;
+  const context = {
+    forwardingScore: 999,
+    isForwarded: true,
+    forwardedNewsletterMessageInfo: {
+      newsletterJid: "120363295141350550@newsletter",
+      newsletterName: "ALONE Queen MD V²",
+      serverMessageId: 143
+    },
+    externalAdReply: {
+      title: "❗ALONE MD REMOVER☠️",
+      body: "📲Follow for updates!",
+      thumbnailUrl: conf.URL,
+      sourceUrl: conf.GURL,
+      mediaType: 1
     }
   };
 
-  const memberAdmin = (membresGroupe) => {
-    let admin = [];
-    for (m of membresGroupe) {
-      if (m.admin == null) continue;
-      admin.push(m.id);
-    }
-    return admin;
-  };
+  const send = (text) => zk.sendMessage(dest, { text, contextInfo: context });
 
-  const a = verifGroupe ? memberAdmin(membresGroupe) : '';
-  let admin = verifGroupe ? a.includes(auteurMsgRepondu) : false;
-  let membre = verifMember(auteurMsgRepondu);
-  let autAdmin = verifGroupe ? a.includes(auteurMessage) : false;
-  let zkad = verifGroupe ? a.includes(idBot) : false;
+  if (!verifGroupe) return send("for groups only");
+
+  let membresGroupe = await infosGroupe.participants;
+
+  const isMember = (user) => membresGroupe.some((m) => m.id === user);
+  const getAdmins = (membres) => membres.filter((m) => m.admin).map((m) => m.id);
+
+  const adminList = getAdmins(membresGroupe);
+  const isTargetAdmin = adminList.includes(auteurMsgRepondu);
+  const isBotAdmin = adminList.includes(idBot);
+  const isAuthorAdmin = adminList.includes(auteurMessage);
+  const isTargetInGroup = isMember(auteurMsgRepondu);
 
   try {
-    if (autAdmin || superUser) {
+    if (isAuthorAdmin || superUser) {
       if (msgRepondu) {
-        if (zkad) {
-          if (membre) {
-            if (admin == false) {
+        if (isBotAdmin) {
+          if (isTargetInGroup) {
+            if (!isTargetAdmin) {
               const stickerUrl = stickers[Math.floor(Math.random() * stickers.length)];
               const sticker = new Sticker(stickerUrl, {
-                pack: 'ALONE-MD',
+                pack: "ALONE-MD",
                 author: nomAuteurMessage,
                 type: StickerTypes.FULL,
-                categories: ['🤩', '🎉'],
-                id: '12345',
+                categories: ["🤩", "🎉"],
+                id: "12345",
                 quality: 50,
-                background: '#000000'
+                background: "#000000"
               });
 
               await sticker.toFile("st.webp");
+
               const txt = `@${auteurMsgRepondu.split("@")[0]} was removed from the group.\n`;
+
               await zk.groupParticipantsUpdate(dest, [auteurMsgRepondu], "remove");
-              zk.sendMessage(dest, { text: txt, mentions: [auteurMsgRepondu],   contextInfo: {
-        forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363295141350550@newsletter',
-              newsletterName: 'ALONE Queen MD V²',
-              serverMessageId: 143},
-        externalAdReply: {
-          title: "Fun Fact",
-          body: "Here's a fun fact to enlighten your day!",
-          thumbnailUrl: conf.URL,
-          sourceUrl: conf.GURL,
-          mediaType: 1,
-          
-        }
-      }
-       });
-              zk.sendMessage(dest, { sticker: fs.readFileSync("st.webp") }, { quoted: msgRepondu });
+
+              await zk.sendMessage(dest, {
+                text: txt,
+                mentions: [auteurMsgRepondu],
+                contextInfo: context
+              });
+
+              await zk.sendMessage(dest, {
+                sticker: fs.readFileSync("st.webp")
+              }, { quoted: msgRepondu });
             } else {
-              repondre("This member cannot be removed because he is an administrator of the group.");
+              return send("This member cannot be removed because he is an administrator of the group.");
             }
           } else {
-            return repondre("This user is not part of the group.");
+            return send("This user is not part of the group.");
           }
         } else {
-          return repondre("Sorry, I cannot perform this action because I am not an administrator of the group.");
+          return send("Sorry, I cannot perform this action because I am not an administrator of the group.");
         }
       } else {
-        repondre("Please tag the member to be removed.");
+        return send("Please tag the member to be removed.");
       }
     } else {
-      return repondre("Sorry I cannot perform this action because you are not an administrator of the group.");
+      return send("Sorry, I cannot perform this action because you are not an administrator of the group.");
     }
   } catch (e) {
-    repondre("Oops " + e);
+    return send("Oops " + e);
   }
 });
-
 
 zokou({
   'nomCom': "broadcast",
@@ -749,66 +759,86 @@ zokou({ nomCom: "info", categorie: 'Group' }, async (dest, zk, commandeOptions) 
     zk.sendMessage(dest, mess, { quoted: ms })
   });
 zokou({ nomCom: "antilink", categorie: 'Group', reaction: "🔗" }, async (dest, zk, commandeOptions) => {
-
-
   var { repondre, arg, verifGroupe, superUser, verifAdmin } = commandeOptions;
-  
 
-  
-  if (!verifGroupe) {
-    return repondre("*for groups only*");
-  }
-  
-  if( superUser || verifAdmin) {
-    const enetatoui = await verifierEtatJid(dest)
+  const context = {
+    forwardingScore: 999,
+    isForwarded: true,
+    forwardedNewsletterMessageInfo: {
+      newsletterJid: '120363295141350550@newsletter',
+      newsletterName: 'ALONE Queen MD V²',
+      serverMessageId: 143
+    },
+    externalAdReply: {
+      title: "🚫❌ALONE MD LINK DETECTOR ‼️",
+      body: "Our group moderated automatically!",
+      thumbnailUrl: conf.URL,
+      sourceUrl: conf.GURL,
+      mediaType: 1
+    }
+  };
+
+  const send = (msg) => zk.sendMessage(dest, { text: msg, contextInfo: context });
+
+  if (!verifGroupe) return send("*for groups only*");
+
+  if (superUser || verifAdmin) {
+    const enetatoui = await verifierEtatJid(dest);
+
     try {
-      if (!arg || !arg[0] || arg === ' ') { repondre("antilink on to activate the anti-link feature\nantilink off to deactivate the anti-link feature\nantilink action/remove to directly remove the link without notice\nantilink action/warn to give warnings\nantilink action/delete to remove the link without any sanctions\n\nPlease note that by default, the anti-link feature is set to delete.") ; return};
-     
-      if(arg[0] === 'on') {
+      if (!arg || !arg[0] || arg === ' ') {
+        return send(`antilink on — activate the anti-link feature
+antilink off — deactivate it
+antilink action/remove — auto-remove link
+antilink action/warn — warn the sender
+antilink action/delete — delete the message only
 
-      
-       if(enetatoui ) { repondre("the antilink is already activated for this group")
-                    } else {
-                  await ajouterOuMettreAJourJid(dest,"oui");
-                
-              repondre("the antilink is activated successfully") }
-     
-            } else if (arg[0] === "off") {
+*Default action: delete*`);
+      }
 
-              if (enetatoui) { 
-                await ajouterOuMettreAJourJid(dest , "non");
+      if (arg[0] === 'on') {
+        if (enetatoui) {
+          send("The antilink is already activated for this group");
+        } else {
+          await ajouterOuMettreAJourJid(dest, "oui");
+          send("The antilink is activated successfully");
+        }
 
-                repondre("The antilink has been successfully deactivated");
-                
-              } else {
-                repondre("antilink is not activated for this group");
-              }
-            } else if (arg.join('').split("/")[0] === 'action') {
-                            
+      } else if (arg[0] === "off") {
+        if (enetatoui) {
+          await ajouterOuMettreAJourJid(dest, "non");
+          send("The antilink has been successfully deactivated");
+        } else {
+          send("Antilink is not activated for this group");
+        }
 
-              let action = (arg.join('').split("/")[1]).toLowerCase() ;
+      } else if (arg.join('').split("/")[0] === 'action') {
+        let action = (arg.join('').split("/")[1] || '').toLowerCase();
 
-              if ( action == 'remove' || action == 'warn' || action == 'delete' ) {
+        if (["remove", "warn", "delete"].includes(action)) {
+          await mettreAJourAction(dest, action);
+          send(`The anti-link action has been updated to *${action}*`);
+        } else {
+          send("The only actions available are *warn*, *remove*, and *delete*");
+        }
 
-                await mettreAJourAction(dest,action);
+      } else {
+        send(`antilink on — activate the anti-link feature
+antilink off — deactivate it
+antilink action/remove — auto-remove link
+antilink action/warn — warn the sender
+antilink action/delete — delete the message only
 
-                repondre(`The anti-link action has been updated to ${arg.join('').split("/")[1]}`);
+*Default action: delete*`);
+      }
 
-              } else {
-                  repondre("The only actions available are warn, remove, and delete") ;
-              }
-            
-
-            } else repondre("antilink on to activate the anti-link feature\nantilink off to deactivate the anti-link feature\nantilink action/remove to directly remove the link without notice\nantilink action/warn to give warnings\nantilink action/delete to remove the link without any sanctions\n\nPlease note that by default, the anti-link feature is set to delete.")
-
-      
     } catch (error) {
-       repondre(error)
+      send("Oops! " + error);
     }
 
-  } else { repondre('You are not entitled to this order') ;
+  } else {
+    send('You are not entitled to this order');
   }
-
 });
 
 
