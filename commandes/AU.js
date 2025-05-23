@@ -3,16 +3,15 @@ const cron = require("node-cron");
 const fs = require("fs");
 const axios = require("axios");
 const conf = require(__dirname + "/../set");
-const googleTranslate = require('@vitalets/google-translate-api');
 
 const SETTINGS_FILE = "./autofact-groups.json";
 let autoFactGroups = fs.existsSync(SETTINGS_FILE)
   ? JSON.parse(fs.readFileSync(SETTINGS_FILE))
   : [];
 
-let globalSock = null; // store sock for scheduled task
+let globalSock = null;
 
-// Reply with context info
+// Send message with context
 const replyWithContext = async (sock, jid, ms, text) => {
   const quoted = ms ? { quoted: ms } : {};
   await sock.sendMessage(
@@ -34,16 +33,14 @@ const replyWithContext = async (sock, jid, ms, text) => {
   );
 };
 
-// Command to toggle autofacts (works in groups & private chats)
+// Command to toggle autofacts
 zokou({
   nomCom: "autofacts",
   categorie: "Group",
   reaction: "🧠",
 }, async (jid, sock, data) => {
-  globalSock = sock; // set global sock
+  globalSock = sock;
   const { arg, groupMetadata, ms, isGroup } = data;
-
-  // Allow command in groups and private chats
   const groupId = isGroup ? groupMetadata?.id : jid;
 
   if (!arg[0]) return replyWithContext(sock, jid, ms, "Please use 'on' or 'off'.");
@@ -67,54 +64,29 @@ zokou({
   return replyWithContext(sock, jid, ms, "Invalid argument. Use 'on' or 'off'.");
 });
 
-// Multiple translation API function
+// Fixed: Kiswahili translation using LibreTranslate mirror
 async function translateToSwahili(text) {
-  const translators = [
-    async (txt) => {
-      // LibreTranslate main
-      const res = await axios.post(
-        "https://libretranslate.com/translate",
-        {
-          q: txt,
-          source: "en",
-          target: "sw",
-          format: "text",
-        },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      return res.data.translatedText;
-    },
-    async (txt) => {
-      // LibreTranslate mirror
-      const res = await axios.post(
-        "https://translate.argosopentech.com/translate",
-        {
-          q: txt,
-          source: "en",
-          target: "sw",
-          format: "text",
-        },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      return res.data.translatedText;
-    },
-    async (txt) => {
-      // Google Translate unofficial API
-      const res = await googleTranslate(txt, { from: "en", to: "sw" });
-      return res.text;
-    },
-  ];
+  try {
+    console.log("Translating using Argos LibreTranslate...");
+    const res = await axios.post("https://translate.argosopentech.com/translate", {
+      q: text,
+      source: "en",
+      target: "sw",
+      format: "text",
+    }, {
+      headers: { "Content-Type": "application/json" }
+    });
 
-  for (const translator of translators) {
-    try {
-      const translated = await translator(text);
-      if (translated) return translated;
-    } catch (err) {
-      console.warn("Translation attempt failed:", err.message || err);
+    if (res.data?.translatedText) {
+      return res.data.translatedText;
+    } else {
+      console.warn("Empty translation response");
     }
+  } catch (err) {
+    console.error("Translation error:", err.message || err);
   }
 
-  return "Translation unavailable.";
+  return "⚠️ Kiswahili translation unavailable.";
 }
 
 // Scheduled auto facts every 5 minutes
@@ -127,7 +99,6 @@ cron.schedule("0 */5 * * * *", async () => {
   try {
     const res = await axios.get("https://uselessfacts.jsph.pl/random.json?language=en");
     const factEn = res.data.text;
-
     const factSw = await translateToSwahili(factEn);
 
     for (const groupId of autoFactGroups) {
@@ -136,7 +107,7 @@ cron.schedule("0 */5 * * * *", async () => {
           globalSock,
           groupId,
           null,
-          `🧠 *Random Fact*\n\n${factEn}\n\n*🌍 Swahili:* ${factSw}`
+          `🧠 *Random Fact*\n\n${factEn}\n\n*🌍 Kiswahili:* ${factSw}`
         );
       } catch (err) {
         console.error(`Failed to send fact to ${groupId}:`, err);
