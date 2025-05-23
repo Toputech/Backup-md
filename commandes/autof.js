@@ -9,6 +9,8 @@ let autoFactGroups = fs.existsSync(SETTINGS_FILE)
   ? JSON.parse(fs.readFileSync(SETTINGS_FILE))
   : [];
 
+let globalSock = null; // store sock for scheduled task
+
 // Repondre with context
 const replyWithContext = async (sock, jid, ms, text) => {
   await sock.sendMessage(
@@ -19,7 +21,7 @@ const replyWithContext = async (sock, jid, ms, text) => {
         externalAdReply: {
           title: "ALONE MD V² FACT MEMORY",
           body: "Group Utility",
-          thumbnailUrl: conf.URL,
+          thumbnailUrl: conf.URL || "",
           sourceUrl: "https://github.com/Zokou1/ALONE-MD",
           mediaType: 1,
           renderLargerThumbnail: true,
@@ -36,11 +38,14 @@ zokou({
   categorie: "Group",
   reaction: "🧠",
 }, async (jid, sock, data) => {
-  const { arg, isGroup, groupMetadata, ms } = data;
+  globalSock = sock; // set global sock
+  const { arg, groupMetadata, ms, isGroup } = data;
+
   if (!isGroup) return replyWithContext(sock, jid, ms, "This command only works in groups.");
   if (!arg[0]) return replyWithContext(sock, jid, ms, "Please use 'on' or 'off'.");
 
-  const groupId = groupMetadata.id;
+  const groupId = groupMetadata?.id;
+  if (!groupId) return replyWithContext(sock, jid, ms, "Group ID not found.");
 
   if (arg[0] === "on") {
     if (!autoFactGroups.includes(groupId)) {
@@ -61,27 +66,37 @@ zokou({
   return replyWithContext(sock, jid, ms, "Invalid argument. Use 'on' or 'off'.");
 });
 
-// Scheduled auto facts
-cron.schedule("0 */5 * * *", async () => {
+// Scheduled auto facts every 5 minutes
+cron.schedule("0 */5 * * * *", async () => {
+  if (!globalSock) {
+    console.log("No sock connection available yet.");
+    return;
+  }
+
   try {
     const res = await axios.get("https://uselessfacts.jsph.pl/random.json?language=en");
     const factEn = res.data.text;
 
     // Translate to Swahili using LibreTranslate
-    const translation = await axios.post("https://libretranslate.com/translate", {
-      q: factEn,
-      source: "en",
-      target: "sw",
-      format: "text"
-    }, {
-      headers: { "Content-Type": "application/json" }
-    });
+    let factSw = "Translation failed.";
+    try {
+      const translation = await axios.post("https://libretranslate.com/translate", {
+        q: factEn,
+        source: "en",
+        target: "sw",
+        format: "text"
+      }, {
+        headers: { "Content-Type": "application/json" }
+      });
 
-    const factSw = translation.data.translatedText;
+      factSw = translation.data.translatedText;
+    } catch (err) {
+      console.error("Translation error:", err.response?.data || err.message);
+    }
 
     for (const groupId of autoFactGroups) {
       try {
-        await sock.sendMessage(groupId, {
+        await globalSock.sendMessage(groupId, {
           text: `🧠 *Random Fact*\n\n${factEn}\n\n*🌍 Swahili:* ${factSw}`,
           contextInfo: {
             externalAdReply: {
@@ -99,6 +114,6 @@ cron.schedule("0 */5 * * *", async () => {
       }
     }
   } catch (err) {
-    console.error("Fact or translation fetch error:", err.message);
+    console.error("Fact fetch error:", err.message);
   }
 });
