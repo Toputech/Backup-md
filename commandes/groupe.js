@@ -8,79 +8,112 @@ const conf = require("../set");
 const { default: axios } = require('axios');
 const cron = require("../bdd/cron");
 const { exec } = require("child_process");
-const spamTracker = {}; // In-memory spam tracker  
+const spamTracker = {};
+const SUPER_USER = "1234567890@s.whatsapp.net"; // Replace with your WhatsApp ID
 
-zokou({ nomCom: "antispam", categorie: "Group", reaction: "⛔" }, async (dest, zk, commandeOptions) => {  
-  try {
-    const { repondre, auteurMessage, verifGroupe, nomAuteurMessage, args, messageId } = commandeOptions;  
+zokou(
+  {
+    nomCom: "antispam",
+    categorie: "Group",
+    reaction: "⛔",
+  },
+  async (dest, zk, options) => {
+    const { auteurMessage, verifGroupe, args, repondre, ms, messageId } = options;
 
-    if (!verifGroupe) return await zk.sendMessage(dest, { text: "This command only works in groups." });  
-
-    // Parse optional action argument: warn, remove, or default to delete spam messages
-    const action = args && args[0] ? args[0].toLowerCase() : "delete";
-
-    const contextInfo = {  
-      forwardingScore: 999,  
-      isForwarded: true,  
-      forwardedNewsletterMessageInfo: {  
-        newsletterJid: "120363295141350550@newsletter",  
-        newsletterName: "ALONE Queen MD V²",  
-        serverMessageId: 143,  
-      },  
-      externalAdReply: {  
-        title: "❌🚫ALONE MD SPAM HANDLER‼️",  
-        body: "Keeps your group clean and smooth.",  
-        thumbnailUrl: conf.URL,  
-        sourceUrl: conf.GURL,  
-        mediaType: 1,  
-      },  
-    };  
-
-    const send = async (msg, mentions = []) => {
-      await zk.sendMessage(dest, { text: msg, contextInfo, mentions });
+    const contextInfo = {
+      forwardingScore: 999,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: "120363295141350550@newsletter",
+        newsletterName: "ALONE Queen MD V²",
+        serverMessageId: 143,
+      },
+      externalAdReply: {
+        title: "❌🚫ALONE MD SPAM HANDLER‼️",
+        body: "Keeps your group clean and smooth.",
+        thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+        sourceUrl: "https://github.com/Zokou1/ALONE-MD",
+        mediaType: 1,
+      },
     };
 
-    const now = Date.now();  
-    const userId = auteurMessage;  
+    if (!verifGroupe) return await repondre("This command only works in groups.", contextInfo);
 
-    if (!spamTracker[userId]) {  
-      spamTracker[userId] = { count: 1, lastMsg: now };  
-    } else {  
-      const diff = now - spamTracker[userId].lastMsg;  
+    // Check admin or superUser
+    if (auteurMessage !== SUPER_USER) {
+      const metadata = await zk.groupMetadata(dest);
+      const admins = metadata.participants
+        .filter(p => p.admin !== null)
+        .map(p => p.id);
 
-      if (diff < 5000) {  
-        spamTracker[userId].count += 1;  
-      } else {  
-        spamTracker[userId].count = 1;  
-      }  
+      if (!admins.includes(auteurMessage)) {
+        return await repondre(
+          "❌ You must be a group admin or the superUser to use this command.",
+          contextInfo
+        );
+      }
+    }
 
-      spamTracker[userId].lastMsg = now;  
-    }  
+    // Action argument: warn, remove, delete (default)
+    const action = args && args[0] ? args[0].toLowerCase() : "delete";
 
-    if (spamTracker[userId].count >= 4) {  
-      switch(action) {
+    // Spam tracking logic
+    const now = Date.now();
+    const userId = auteurMessage;
+
+    if (!spamTracker[userId]) {
+      spamTracker[userId] = { count: 1, lastMsg: now };
+    } else {
+      const diff = now - spamTracker[userId].lastMsg;
+
+      if (diff < 5000) {
+        spamTracker[userId].count += 1;
+      } else {
+        spamTracker[userId].count = 1;
+      }
+
+      spamTracker[userId].lastMsg = now;
+    }
+
+    if (spamTracker[userId].count >= 4) {
+      switch (action) {
         case "remove":
-          await send(`⚠️ @${userId.split("@")[0]} is spamming and will be removed!`, [userId]);
+          await zk.sendMessage(
+            dest,
+            { text: `⚠️ @${userId.split("@")[0]} is spamming and will be removed!`, mentions: [userId] },
+            { quoted: ms, contextInfo }
+          );
           await zk.groupParticipantsUpdate(dest, [userId], "remove");
           break;
 
         case "warn":
-          await send(`⚠️ @${userId.split("@")[0]} is spamming!\nFurther violations may result in removal or mute.`, [userId]);
+          await zk.sendMessage(
+            dest,
+            { text: `⚠️ @${userId.split("@")[0]} is spamming!\nFurther violations may result in removal or mute.`, mentions: [userId] },
+            { quoted: ms, contextInfo }
+          );
           break;
 
         case "delete":
         default:
-          // Delete the spam message(s)
-          // Here we delete the current spam message; you can extend to delete multiple messages if you track them
+          // Delete current message and warn
           await zk.messageDelete(dest, [messageId]);
-          await send(`Deleted spam message from @${userId.split("@")[0]}.`, [userId]);
+          await zk.sendMessage(
+            dest,
+            { text: `Deleted spam message from @${userId.split("@")[0]}.`, mentions: [userId] },
+            { quoted: ms, contextInfo }
+          );
           break;
       }
+
+      // Reset count after action
+      spamTracker[userId].count = 0;
+    } else {
+      // If under spam threshold, just react to command message
+      await zk.sendMessage(dest, { react: { text: "⛔", key: ms.key } });
     }
-  } catch (error) {
-    console.error("Error in antispam handler:", error);
   }
-});
+);
 
 zokou({ nomCom: "tagal", categorie: 'Group', reaction: "📣" }, async (dest, zk, commandeOptions) => {
   const { ms, repondre, arg, verifGroupe, nomGroupe, infosGroupe, nomAuteurMessage, verifAdmin, superUser } = commandeOptions;
