@@ -3,6 +3,7 @@ const cron = require("node-cron");
 const fs = require("fs");
 const axios = require("axios");
 const conf = require(__dirname + "/../set");
+const googleTranslate = require('@vitalets/google-translate-api');
 
 const SETTINGS_FILE = "./autofact-groups.json";
 let autoFactGroups = fs.existsSync(SETTINGS_FILE)
@@ -11,7 +12,7 @@ let autoFactGroups = fs.existsSync(SETTINGS_FILE)
 
 let globalSock = null;
 
-// Send message with context
+// Context reply helper
 const replyWithContext = async (sock, jid, ms, text) => {
   const quoted = ms ? { quoted: ms } : {};
   await sock.sendMessage(
@@ -33,7 +34,7 @@ const replyWithContext = async (sock, jid, ms, text) => {
   );
 };
 
-// Command to toggle autofacts
+// Enable/disable autofacts
 zokou({
   nomCom: "autofacts",
   categorie: "Group",
@@ -64,10 +65,10 @@ zokou({
   return replyWithContext(sock, jid, ms, "Invalid argument. Use 'on' or 'off'.");
 });
 
-// Fixed: Kiswahili translation using LibreTranslate mirror
+// Reliable Kiswahili translation function
 async function translateToSwahili(text) {
+  // Try LibreTranslate mirror first
   try {
-    console.log("Translating using Argos LibreTranslate...");
     const res = await axios.post("https://translate.argosopentech.com/translate", {
       q: text,
       source: "en",
@@ -79,17 +80,23 @@ async function translateToSwahili(text) {
 
     if (res.data?.translatedText) {
       return res.data.translatedText;
-    } else {
-      console.warn("Empty translation response");
     }
   } catch (err) {
-    console.error("Translation error:", err.message || err);
+    console.warn("LibreTranslate failed:", err.message || err);
+  }
+
+  // Fallback: Google Translate unofficial
+  try {
+    const res = await googleTranslate(text, { from: 'en', to: 'sw' });
+    return res.text;
+  } catch (err) {
+    console.error("Google Translate failed:", err.message || err);
   }
 
   return "⚠️ Kiswahili translation unavailable.";
 }
 
-// Scheduled auto facts every 5 minutes
+// Send random facts every 5 minutes
 cron.schedule("0 */5 * * * *", async () => {
   if (!globalSock) {
     console.log("No sock connection available yet.");
@@ -99,6 +106,7 @@ cron.schedule("0 */5 * * * *", async () => {
   try {
     const res = await axios.get("https://uselessfacts.jsph.pl/random.json?language=en");
     const factEn = res.data.text;
+
     const factSw = await translateToSwahili(factEn);
 
     for (const groupId of autoFactGroups) {
