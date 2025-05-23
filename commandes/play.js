@@ -13,14 +13,37 @@ zokou(
     const { arg, ms } = data;
 
     const repondre = async (text) => {
-      await sock.sendMessage(jid, { text }, { quoted: ms });
+      await sock.sendMessage(
+        jid,
+        {
+          text,
+          contextInfo: {
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: "120363295141350550@newsletter",
+              newsletterName: "ALONE Queen MD V²",
+              serverMessageId: 143,
+            },
+            externalAdReply: {
+              title: "Movie Finder",
+              body: "Powered by ALONE MD V²",
+              thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+              sourceUrl: "https://github.com/Zokou1/ALONE-MD",
+              mediaType: 1,
+              renderLargerThumbnail: false,
+            },
+          },
+        },
+        { quoted: ms }
+      );
     };
 
     if (!arg[0]) return repondre("Please provide a movie title.");
     const query = arg.join(" ");
 
     try {
-      // OMDb Search
+      // Search movie in OMDb
       const searchUrl = `http://www.omdbapi.com/?s=${encodeURIComponent(query)}&apikey=38f19ae1`;
       const searchRes = await axios.get(searchUrl);
       const result = searchRes.data;
@@ -34,7 +57,7 @@ zokou(
       const detailsRes = await axios.get(detailsUrl);
       const movie = detailsRes.data;
 
-      // Trailer Search
+      // Search trailer on YouTube
       const ytResult = await ytSearch(`${movie.Title} trailer`);
       if (!ytResult.videos || ytResult.videos.length === 0) {
         return repondre("No trailer found on YouTube.");
@@ -43,32 +66,49 @@ zokou(
       const trailerVideo = ytResult.videos[0];
       const trailerUrl = trailerVideo.url;
 
+      // Get trailer video as buffer
       try {
-        const res = await axios.get(`https://api.vevioz.com/api/button/mp4?url=${trailerUrl}`);
-        const match = res.data.match(/href="(https:\/\/[^"]+\.mp4)"/);
+        const ytDlRes = await axios.get(`https://youtube-download-api.matheusishiyama.repl.co/mp4/?url=${encodeURIComponent(trailerUrl)}`, {
+          responseType: 'arraybuffer'
+        });
 
-        if (!match) {
-          return repondre("Failed to retrieve trailer download link.");
-        }
-
-        const videoDownloadUrl = match[1];
+        const videoBuffer = Buffer.from(ytDlRes.data, 'binary');
 
         await sock.sendMessage(
           jid,
           {
-            video: { url: videoDownloadUrl },
+            video: videoBuffer,
             caption: `🎬 *${movie.Title}* (${movie.Year})\n⭐ *IMDb:* ${movie.imdbRating}/10\n\n📖 *Plot:* ${movie.Plot}`,
+            contextInfo: {
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: "120363295141350550@newsletter",
+                newsletterName: "ALONE Queen MD V²",
+                serverMessageId: 143,
+              },
+              externalAdReply: {
+                title: movie.Title,
+                body: "Watch the trailer",
+                thumbnailUrl: movie.Poster !== "N/A"
+                  ? movie.Poster
+                  : "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+                sourceUrl: `https://www.imdb.com/title/${movie.imdbID}`,
+                mediaType: 1,
+                renderLargerThumbnail: true,
+              },
+            },
           },
           { quoted: ms }
         );
       } catch (e) {
-        console.log("Trailer download error:", e.message);
-        await repondre("Trailer download failed.");
+        console.error("Trailer download error:", e.message);
+        return repondre("Failed to fetch trailer video.");
       }
 
     } catch (err) {
       console.error("Movie fetch error:", err.message);
-      return repondre("Could not fetch movie data.");
+      return repondre("Failed to fetch movie info. Try again later.");
     }
   }
 );
