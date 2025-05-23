@@ -153,7 +153,6 @@ zokou({
           sourceUrl: "https://github.com/Zokou1/ALONE-MD",
           mediaType: 1,
           renderLargerThumbnail: false,
-          showAdAttribution: false,
         },
       },
     }, { quoted: ms });
@@ -162,42 +161,58 @@ zokou({
   if (!arg[0]) return repondre("Please provide the song name.");
 
   const query = arg.join(" ");
+  let lyricsData = null;
 
-  // List of fallback APIs
-  const apiList = [
-    `https://some-random-api.ml/lyrics?title=${encodeURIComponent(query)}`,
-    `https://api.lyrics.ovh/v1/${encodeURIComponent(query.split(" ")[0])}/${encodeURIComponent(query)}`,
-    `https://lyrist.vercel.app/api/${encodeURIComponent(query)}`,
-    `https://api.song.link/v1-alpha.1/links?title=${encodeURIComponent(query)}`,
-    `https://api.popcat.xyz/lyrics?song=${encodeURIComponent(query)}`
+  const sources = [
+    async () => {
+      const res = await axios.get(`https://api.popcat.xyz/lyrics?song=${encodeURIComponent(query)}`);
+      return {
+        title: res.data.title,
+        author: res.data.artist,
+        lyrics: res.data.lyrics,
+        thumbnail: res.data.image,
+        link: res.data.url
+      };
+    },
+    async () => {
+      const res = await axios.get(`https://some-random-api.ml/lyrics?title=${encodeURIComponent(query)}`);
+      return {
+        title: res.data.title,
+        author: res.data.author || "Unknown",
+        lyrics: res.data.lyrics,
+        thumbnail: res.data.thumbnail?.genius,
+        link: res.data.links?.genius
+      };
+    },
+    async () => {
+      const res = await axios.get(`https://lyrist.vercel.app/api/${encodeURIComponent(query)}`);
+      return {
+        title: query,
+        author: "Unknown",
+        lyrics: res.data.content,
+        thumbnail: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+        link: "https://github.com/Zokou1/ALONE-MD"
+      };
+    }
   ];
 
-  let lyricsData = null;
-  let source = null;
-
-  for (const url of apiList) {
+  for (const fetchLyrics of sources) {
     try {
-      const res = await axios.get(url);
-      if (res.data && (res.data.lyrics || res.data.result || res.data.content)) {
-        lyricsData = res.data;
-        source = url;
+      const data = await fetchLyrics();
+      if (data && data.lyrics) {
+        lyricsData = data;
         break;
       }
     } catch (err) {
-      continue;
+      console.log("Lyrics source failed:", err.message);
     }
   }
 
   if (!lyricsData) return repondre("Couldn't find lyrics from any source. Try again later or with a different song.");
 
-  let title = lyricsData.title || query;
-  let author = lyricsData.author || lyricsData.artist || "Unknown Artist";
-  let lyrics = lyricsData.lyrics || lyricsData.result?.lyrics || lyricsData.content || "Lyrics not available.";
-  lyrics = lyrics.slice(0, 4096);
-  const thumbnail = lyricsData.thumbnail?.genius || "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg";
-  const link = lyricsData.links?.genius || lyricsData.url || "https://github.com/Zokou1/ALONE-MD";
+  const { title, author, lyrics, thumbnail, link } = lyricsData;
 
-  const message = `*🎵 Title:* ${title}\n*👤 Artist:* ${author}\n\n${lyrics}`;
+  const message = `*🎵 Title:* ${title}\n*👤 Artist:* ${author}\n\n${lyrics.slice(0, 4096)}`;
 
   await sock.sendMessage(jid, {
     image: { url: thumbnail },
@@ -210,7 +225,6 @@ zokou({
         thumbnailUrl: thumbnail,
         sourceUrl: link,
         renderLargerThumbnail: false,
-        showAdAttribution: false,
       },
     },
   }, { quoted: ms });
