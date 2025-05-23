@@ -94,8 +94,8 @@ zokou({ nomCom: "remove", categorie: "Group", reaction: "👨🏿‍💼" }, asy
       serverMessageId: 143
     },
     externalAdReply: {
-      title: "Fun Fact",
-      body: "Here's a fun fact to enlighten your day!",
+      title: "❗ALONE MD REMOVER☠️",
+      body: "📲Follow for updates!",
       thumbnailUrl: conf.URL,
       sourceUrl: conf.GURL,
       mediaType: 1
