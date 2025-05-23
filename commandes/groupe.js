@@ -84,92 +84,79 @@ zokou({ nomCom: "remove", categorie: 'Group', reaction: "👨🏿‍💼" }, asy
       else return true;
     }
   };
-try {
-  const contextInfo = {
-    forwardingScore: 999,
-    isForwarded: true,
-    forwardedNewsletterMessageInfo: {
-      newsletterJid: '120363295141350550@newsletter',
-      newsletterName: 'ALONE Queen MD V²',
-      serverMessageId: 143
-    },
-    externalAdReply: {
-      title: "Fun Fact",
-      body: "Here's a fun fact to enlighten your day!",
-      thumbnailUrl: conf.URL,
-      sourceUrl: conf.GURL,
-      mediaType: 1
+
+  const memberAdmin = (membresGroupe) => {
+    let admin = [];
+    for (m of membresGroupe) {
+      if (m.admin == null) continue;
+      admin.push(m.id);
     }
+    return admin;
   };
 
-  if (autAdmin || superUser) {
-    if (msgRepondu) {
-      if (zkad) {
-        if (membre) {
-          if (admin == false) {
-            const stickerUrl = stickers[Math.floor(Math.random() * stickers.length)];
-            const sticker = new Sticker(stickerUrl, {
-              pack: 'ALONE-MD',
-              author: nomAuteurMessage,
-              type: StickerTypes.FULL,
-              categories: ['🤩', '🎉'],
-              id: '12345',
-              quality: 50,
-              background: '#000000'
-            });
+  const a = verifGroupe ? memberAdmin(membresGroupe) : '';
+  let admin = verifGroupe ? a.includes(auteurMsgRepondu) : false;
+  let membre = verifMember(auteurMsgRepondu);
+  let autAdmin = verifGroupe ? a.includes(auteurMessage) : false;
+  let zkad = verifGroupe ? a.includes(idBot) : false;
 
-            await sticker.toFile("st.webp");
+  try {
+    if (autAdmin || superUser) {
+      if (msgRepondu) {
+        if (zkad) {
+          if (membre) {
+            if (admin == false) {
+              const stickerUrl = stickers[Math.floor(Math.random() * stickers.length)];
+              const sticker = new Sticker(stickerUrl, {
+                pack: 'ALONE-MD',
+                author: nomAuteurMessage,
+                type: StickerTypes.FULL,
+                categories: ['🤩', '🎉'],
+                id: '12345',
+                quality: 50,
+                background: '#000000'
+              });
 
-            const txt = `@${auteurMsgRepondu.split("@")[0]} was removed from the group.\n`;
-            await zk.groupParticipantsUpdate(dest, [auteurMsgRepondu], "remove");
-
-            await zk.sendMessage(dest, { 
-              text: txt, 
-              mentions: [auteurMsgRepondu], 
-              contextInfo 
-            });
-
-            await zk.sendMessage(dest, { 
-              sticker: fs.readFileSync("st.webp"),
-              contextInfo 
-            }, { quoted: msgRepondu });
-
+              await sticker.toFile("st.webp");
+              const txt = `@${auteurMsgRepondu.split("@")[0]} was removed from the group.\n`;
+              await zk.groupParticipantsUpdate(dest, [auteurMsgRepondu], "remove");
+              zk.sendMessage(dest, { text: txt, mentions: [auteurMsgRepondu],   contextInfo: {
+        forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'ALONE Queen MD V²',
+              serverMessageId: 143},
+        externalAdReply: {
+          title: "Fun Fact",
+          body: "Here's a fun fact to enlighten your day!",
+          thumbnailUrl: conf.URL,
+          sourceUrl: conf.GURL,
+          mediaType: 1,
+          
+        }
+      }
+       });
+              zk.sendMessage(dest, { sticker: fs.readFileSync("st.webp") }, { quoted: msgRepondu });
+            } else {
+              repondre("This member cannot be removed because he is an administrator of the group.");
+            }
           } else {
-            await zk.sendMessage(dest, {
-              text: "This member cannot be removed because he is an administrator of the group.",
-              contextInfo
-            });
+            return repondre("This user is not part of the group.");
           }
         } else {
-          return zk.sendMessage(dest, {
-            text: "This user is not part of the group.",
-            contextInfo
-          });
+          return repondre("Sorry, I cannot perform this action because I am not an administrator of the group.");
         }
       } else {
-        return zk.sendMessage(dest, {
-          text: "Sorry, I cannot perform this action because I am not an administrator of the group.",
-          contextInfo
-        });
+        repondre("Please tag the member to be removed.");
       }
     } else {
-      await zk.sendMessage(dest, {
-        text: "Please tag the member to be removed.",
-        contextInfo
-      });
+      return repondre("Sorry I cannot perform this action because you are not an administrator of the group.");
     }
-  } else {
-    return zk.sendMessage(dest, {
-      text: "Sorry I cannot perform this action because you are not an administrator of the group.",
-      contextInfo
-    });
+  } catch (e) {
+    repondre("Oops " + e);
   }
-} catch (e) {
-  zk.sendMessage(dest, {
-    text: "Oops " + e,
-    contextInfo
-  });
-              });
+});
 
 
 zokou({
