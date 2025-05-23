@@ -137,7 +137,22 @@ zokou({ nomCom: "remove", categorie: 'Group', reaction: "👨🏿‍💼" }, asy
         }
       }
        });
-              zk.sendMessage(dest, { sticker: fs.readFileSync("st.webp") }, { quoted: msgRepondu });
+              zk.sendMessage(dest, { sticker: fs.readFileSync("st.webp") , contextInfo: {
+        forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'ALONE MD V²',
+              serverMessageId: 143},
+        externalAdReply: {
+          title: "Fun Fact",
+          body: "Here's a fun fact to enlighten your day!",
+          thumbnailUrl: conf.URL,
+          sourceUrl: conf.GURL,
+          mediaType: 1,
+          
+        }
+              },{ quoted: msgRepondu });
             } else {
               repondre("This member cannot be removed because he is an administrator of the group.");
             }
