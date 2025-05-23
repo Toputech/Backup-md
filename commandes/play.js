@@ -1,6 +1,72 @@
 const { zokou } = require("../framework/zokou");
 const axios = require("axios");
 const ytSearch = require("yt-search");
+
+zokou({
+  nomCom: "lyrics",
+  aliases: ["ly", "songlyrics", "lyric"],
+  categorie: "Search",
+  reaction: "📝",
+}, async (jid, sock, data) => {
+  const { arg, ms } = data;
+
+  const repondre = async (text) => {
+    await sock.sendMessage(jid, {
+      text,
+      contextInfo: {forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'ALONE Queen MD V²',
+              serverMessageId: 143},
+        externalAdReply: {
+          title: "🎵 ALONE MD LYRICS FINDER",
+          body: "Powered by ALONE MD V²",
+          thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+          sourceUrl: "https://github.com/Zokou1/ALONE-MD",
+          mediaType: 1,
+          renderLargerThumbnail: false,
+          showAdAttribution: false,
+        },
+      },
+    }, { quoted: ms });
+  };
+
+  if (!arg[0]) return repondre("Please provide the song name.");
+
+  const query = arg.join(" ");
+
+  try {
+    const res = await axios.get(`https://some-random-api.com/lyrics?title=${encodeURIComponent(query)}`);
+    const lyricsData = res.data;
+
+    const title = lyricsData.title || query;
+    const author = lyricsData.author || "Unknown Artist";
+    const lyrics = lyricsData.lyrics.slice(0, 4096); // trim long lyrics to avoid message limits
+
+    const message = `*🎵 Title:* ${title}\n*👤 Artist:* ${author}\n\n${lyrics}`;
+
+    await sock.sendMessage(jid, {
+      image: { url: lyricsData.thumbnail.genius },
+      caption: message,
+      contextInfo: {
+        externalAdReply: {
+          title: title,
+          body: `By ${author}`,
+          mediaType: 1,
+          thumbnailUrl: lyricsData.thumbnail.genius,
+          sourceUrl: lyricsData.links.genius,
+          renderLargerThumbnail: true,
+          showAdAttribution: false,
+        },
+      },
+    }, { quoted: ms });
+
+  } catch (err) {
+    console.error("Lyrics fetch error:", err.message);
+    return repondre("Failed to fetch lyrics. Try using a more specific song title.");
+  }
+});
 zokou({
   nomCom: "movie",
   aliases: ["getmovie", "moviedl"],
