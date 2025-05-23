@@ -8,7 +8,57 @@ const conf = require("../set");
 const { default: axios } = require('axios');
 const cron = require("../bdd/cron");
 const { exec } = require("child_process");
+const spamTracker = {}; // In-memory spam tracker
 
+zokou({ nomCom: "antispam", categorie: "Group", reaction: "⛔" }, async (dest, zk, commandeOptions) => {
+  const { repondre, auteurMessage, verifGroupe, nomAuteurMessage } = commandeOptions;
+
+  const contextInfo = {
+    forwardingScore: 999,
+    isForwarded: true,
+    forwardedNewsletterMessageInfo: {
+      newsletterJid: "120363295141350550@newsletter",
+      newsletterName: "ALONE Queen MD V²",
+      serverMessageId: 143,
+    },
+    externalAdReply: {
+      title: "❌🚫ALONE MD SPAM HANDLER‼️",
+      body: "Keeps your group clean and smooth.",
+      thumbnailUrl: conf.URL,
+      sourceUrl: conf.GURL,
+      mediaType: 1,
+    },
+  };
+
+  const send = (msg) => zk.sendMessage(dest, { text: msg, contextInfo });
+
+  if (!verifGroupe) return send("This command only works in groups.");
+
+  const now = Date.now();
+  const userId = auteurMessage;
+
+  if (!spamTracker[userId]) {
+    spamTracker[userId] = { count: 1, lastMsg: now };
+  } else {
+    const diff = now - spamTracker[userId].lastMsg;
+
+    if (diff < 5000) {
+      spamTracker[userId].count += 1;
+    } else {
+      spamTracker[userId].count = 1;
+    }
+
+    spamTracker[userId].lastMsg = now;
+
+    if (spamTracker[userId].count >= 4) {
+      // Action to take — customize as needed
+      send(`⚠️ @${userId.split("@")[0]} is spamming!\nFurther violations may result in removal or mute.`);
+      // You could also use:
+      // await zk.groupParticipantsUpdate(dest, [userId], "remove");
+      // or custom mute logic
+    }
+  }
+});
 
 zokou({ nomCom: "tagal", categorie: 'Group', reaction: "📣" }, async (dest, zk, commandeOptions) => {
   const { ms, repondre, arg, verifGroupe, nomGroupe, infosGroupe, nomAuteurMessage, verifAdmin, superUser } = commandeOptions;
