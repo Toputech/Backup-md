@@ -4,7 +4,6 @@ const ytSearch = require("yt-search");
 const ytdl = require("ytdl-core");
 const fs = require("fs");
 const path = require("path");
-const axios = require("axios"); const ytSearch = require("yt-search");
 
 zokou({ nomCom: "playvideo", aliases: ["video", "ytvideo", "ytmp4"], categorie: "Search", reaction: "⬇️", }, async (jid, sock, data) => { const { arg, ms } = data;
 
