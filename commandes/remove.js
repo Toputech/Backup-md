@@ -1,11 +1,11 @@
-const { zokou, superUser } = require("../framework/zokou"); // Assuming superUser is exported
+const { zokou, superUser } = require("../framework/zokou");
 
 zokou({
   nomCom: "sendall",
   categorie: "Group",
   reaction: "✉️",
 }, async (jid, sock, data) => {
-  const { ms, arg, groupMetadata, isGroup } = data;
+  const { ms, arg, groupMetadata } = data;
 
   const replyWithContext = (text) =>
     sock.sendMessage(jid, {
@@ -30,7 +30,8 @@ zokou({
       },
     }, { quoted: ms });
 
-  if (!isGroup) return replyWithContext("This command can only be used in a group.");
+  // Fix: Reliable group check
+  if (!jid.endsWith("@g.us")) return replyWithContext("This command can only be used in a group.");
 
   const senderId = ms.key.participant || ms.key.remoteJid;
   const isSuperUser = superUser.includes(senderId);
