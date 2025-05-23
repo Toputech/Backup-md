@@ -2,6 +2,7 @@ const { zokou } = require("../framework/zokou");
 const cron = require("node-cron");
 const fs = require("fs");
 const axios = require("axios");
+const conf = require(__dirname + "/../set");
 
 const SETTINGS_FILE = "./autofact-groups.json";
 let autoFactGroups = fs.existsSync(SETTINGS_FILE)
