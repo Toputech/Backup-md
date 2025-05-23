@@ -1,7 +1,67 @@
 const { zokou } = require("../framework/zokou");
 const axios = require("axios");
 const ytSearch = require("yt-search");
+const { zokou } = require("../framework/zokou");
+const axios = require("axios");
 
+zokou({
+  nomCom: "movie",
+  aliases: ["getmovie", "moviedl"],
+  categorie: "Search",
+  reaction: "🎬",
+}, async (jid, sock, data) => {
+  const { arg, ms } = data;
+
+  const repondre = async (text) => {
+    await sock.sendMessage(jid, {
+      text,
+      contextInfo: {
+        externalAdReply: {
+          title: "Movie Finder",
+          body: "Powered by ALONE MD V²",
+          thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+          sourceUrl: "https://github.com/Zokou1/ALONE-MD",
+          mediaType: 1,
+          renderLargerThumbnail: true,
+        },
+      },
+    }, { quoted: ms });
+  };
+
+  if (!arg[0]) return repondre("Please provide a movie title.");
+  const query = arg.join(" ");
+
+  try {
+    const searchUrl = `https://api.xyroinee.xyz/api/sdmovie?search=${encodeURIComponent(query)}&apikey=xyroinee`;
+    const res = await axios.get(searchUrl);
+    const result = res.data;
+
+    if (!result || !result.result || result.result.length === 0)
+      return repondre("No movie found for that name.");
+
+    const movie = result.result[0];
+    const caption = `*🎬 Title:* ${movie.title}\n*📅 Year:* ${movie.year}\n*📥 Download:* ${movie.url}`;
+
+    await sock.sendMessage(jid, {
+      image: { url: movie.image },
+      caption,
+      contextInfo: {
+        externalAdReply: {
+          title: movie.title,
+          body: "Tap to download or watch",
+          thumbnailUrl: movie.image,
+          sourceUrl: movie.url,
+          mediaType: 1,
+          renderLargerThumbnail: true,
+        },
+      },
+    }, { quoted: ms });
+
+  } catch (err) {
+    console.error("Movie fetch error:", err.message);
+    return repondre("Failed to fetch movie info. Try again later.");
+  }
+});
 zokou({
   nomCom: "playvideo",
   aliases: ["video", "ytvideo", "ytmp4"],
