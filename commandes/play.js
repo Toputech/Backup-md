@@ -48,12 +48,10 @@ zokou(
     await repondre("Searching movie and trailer, please wait...");
 
     try {
-      const apiKey = "38f19ae1"; // Replace with your valid OMDb API key if needed
+      const apiKey = "38f19ae1"; // Replace with your OMDb API key if needed
       const searchUrl = `http://www.omdbapi.com/?s=${encodeURIComponent(query)}&apikey=${apiKey}`;
       const searchRes = await axios.get(searchUrl);
       const result = searchRes.data;
-
-      console.log("OMDb Search response:", result);
 
       if (!result || result.Response === "False" || !result.Search || result.Search.length === 0) {
         let errorMsg = result.Error || "No movie found for that name.";
@@ -77,15 +75,19 @@ zokou(
 
       const trailerVideo = ytResult.videos[0];
       const trailerUrl = trailerVideo.url;
-
       const tempVideoPath = path.join(__dirname, `temp_trailer_${Date.now()}.mp4`);
 
-      await new Promise((resolve, reject) => {
-        ytdl(trailerUrl, { filter: "videoandaudio", quality: "highest" })
-          .pipe(fs.createWriteStream(tempVideoPath))
-          .on("finish", resolve)
-          .on("error", reject);
-      });
+      try {
+        await new Promise((resolve, reject) => {
+          ytdl(trailerUrl, { quality: "highest" })
+            .pipe(fs.createWriteStream(tempVideoPath))
+            .on("finish", resolve)
+            .on("error", reject);
+        });
+      } catch (err) {
+        console.error("YouTube download error:", err);
+        return repondre("Could not download trailer from YouTube.");
+      }
 
       await sock.sendMessage(
         jid,
@@ -120,7 +122,7 @@ zokou(
         if (err) console.error("Failed to delete temp trailer video:", err);
       });
     } catch (err) {
-      console.error("Movie fetch or send error:", err);
+      console.error("Movie fetch or send error:", err.stack || err);
       return repondre("Failed to fetch movie info or send trailer. Try again later.");
     }
   }
