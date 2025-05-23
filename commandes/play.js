@@ -90,32 +90,32 @@ zokou({
     },
   }, { quoted: ms });
 });
-
-zokou({
-  nomCom: "movie",
-  aliases: ["getmovie", "moviedl"],
-  categorie: "Search",
-  reaction: "🎬",
+nomCom: "movie",
+aliases: ["getmovie", "moviedl"],
+categorie: "Search",
+reaction: "🎬",
 }, async (jid, sock, data) => {
   const { arg, ms } = data;
 
   const repondre = async (text) => {
     await sock.sendMessage(jid, {
       text,
-      contextInfo: {forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363295141350550@newsletter',
-              newsletterName: 'ALONE Queen MD V²',
-              serverMessageId: 143},
+      contextInfo: {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: '120363295141350550@newsletter',
+          newsletterName: 'ALONE Queen MD V²',
+          serverMessageId: 143
+        },
         externalAdReply: {
           title: "Movie Finder",
           body: "Powered by ALONE MD V²",
           thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
           sourceUrl: "https://github.com/Zokou1/ALONE-MD",
           mediaType: 1,
-          renderLargerThumbnail: false,
-        },
+          renderLargerThumbnail: false
+        }
       },
     }, { quoted: ms });
   };
@@ -124,33 +124,40 @@ zokou({
   const query = arg.join(" ");
 
   try {
-    const searchUrl = `http://www.omdbapi.com/?i=tt3896198&apikey=38f19ae1`;
-    const res = await axios.get(searchUrl);
-    const result = res.data;
+    const searchUrl = `http://www.omdbapi.com/?s=${encodeURIComponent(query)}&apikey=38f19ae1`;
+    const searchRes = await axios.get(searchUrl);
+    const result = searchRes.data;
 
-    if (!result || !result.result || result.result.length === 0)
+    if (!result || result.Response === "False" || !result.Search || result.Search.length === 0) {
       return repondre("No movie found for that name.");
+    }
 
-    const movie = result.result[0];
-    const caption = `*🎬 Title:* ${movie.title}\n*📅 Year:* ${movie.year}\n*📥 Download:* ${movie.url}`;
+    const firstMovie = result.Search[0];
+    const detailsUrl = `http://www.omdbapi.com/?i=${firstMovie.imdbID}&apikey=38f19ae1`;
+    const detailsRes = await axios.get(detailsUrl);
+    const movie = detailsRes.data;
+
+    const caption = `*🎬 Title:* ${movie.Title}\n*📅 Year:* ${movie.Year}\n*⭐ Rating:* ${movie.imdbRating}/10\n*📖 Plot:* ${movie.Plot}\n*🔗 IMDb:* https://www.imdb.com/title/${movie.imdbID}`;
 
     await sock.sendMessage(jid, {
-      image: { url: movie.image },
+      image: { url: movie.Poster !== "N/A" ? movie.Poster : "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg" },
       caption,
-      contextInfo: {forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363295141350550@newsletter',
-              newsletterName: 'ALONE Queen MD V²',
-              serverMessageId: 143},
-        externalAdReply: {
-          title: movie.title,
-          body: "Tap to download or watch",
-          thumbnailUrl: movie.image,
-          sourceUrl: movie.url,
-          mediaType: 1,
-          renderLargerThumbnail: false,
+      contextInfo: {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: '120363295141350550@newsletter',
+          newsletterName: 'ALONE Queen MD V²',
+          serverMessageId: 143
         },
+        externalAdReply: {
+          title: movie.Title,
+          body: "Tap to view on IMDb",
+          thumbnailUrl: movie.Poster !== "N/A" ? movie.Poster : "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+          sourceUrl: `https://www.imdb.com/title/${movie.imdbID}`,
+          mediaType: 1,
+          renderLargerThumbnail: true
+        }
       },
     }, { quoted: ms });
 
@@ -159,6 +166,7 @@ zokou({
     return repondre("Failed to fetch movie info. Try again later.");
   }
 });
+
 zokou({
   nomCom: "playvideo",
   aliases: ["video", "ytvideo", "ytmp4"],
