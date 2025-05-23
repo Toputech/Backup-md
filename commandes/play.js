@@ -1,9 +1,6 @@
 const { zokou } = require("../framework/zokou");
 const axios = require("axios");
 const ytSearch = require("yt-search");
-const { zokou } = require("../framework/zokou");
-const axios = require("axios");
-
 zokou({
   nomCom: "movie",
   aliases: ["getmovie", "moviedl"],
