@@ -11,7 +11,7 @@ let autoFactGroups = fs.existsSync(SETTINGS_FILE)
 
 let globalSock = null; // store sock for scheduled task
 
-// Repondre with context
+// Reply with context info
 const replyWithContext = async (sock, jid, ms, text) => {
   await sock.sendMessage(
     jid,
@@ -32,7 +32,7 @@ const replyWithContext = async (sock, jid, ms, text) => {
   );
 };
 
-// Command to toggle autofacts
+// Command to toggle autofacts (works in groups & private chats)
 zokou({
   nomCom: "autofacts",
   categorie: "Group",
@@ -41,26 +41,25 @@ zokou({
   globalSock = sock; // set global sock
   const { arg, groupMetadata, ms, isGroup } = data;
 
-  if (!isGroup) return replyWithContext(sock, jid, ms, "This command only works in groups.");
-  if (!arg[0]) return replyWithContext(sock, jid, ms, "Please use 'on' or 'off'.");
+  // Allow command in groups and private chats
+  const groupId = isGroup ? groupMetadata?.id : jid;
 
-  const groupId = groupMetadata?.id;
-  if (!groupId) return replyWithContext(sock, jid, ms, "Group ID not found.");
+  if (!arg[0]) return replyWithContext(sock, jid, ms, "Please use 'on' or 'off'.");
 
   if (arg[0] === "on") {
     if (!autoFactGroups.includes(groupId)) {
       autoFactGroups.push(groupId);
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
-      return replyWithContext(sock, jid, ms, "✅ Auto Fact messages enabled for this group.");
+      return replyWithContext(sock, jid, ms, "✅ Auto Fact messages enabled.");
     } else {
-      return replyWithContext(sock, jid, ms, "Auto Fact is already enabled in this group.");
+      return replyWithContext(sock, jid, ms, "Auto Fact is already enabled.");
     }
   }
 
   if (arg[0] === "off") {
     autoFactGroups = autoFactGroups.filter(id => id !== groupId);
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
-    return replyWithContext(sock, jid, ms, "❌ Auto Fact messages disabled for this group.");
+    return replyWithContext(sock, jid, ms, "❌ Auto Fact messages disabled.");
   }
 
   return replyWithContext(sock, jid, ms, "Invalid argument. Use 'on' or 'off'.");
@@ -80,14 +79,18 @@ cron.schedule("0 */5 * * * *", async () => {
     // Translate to Swahili using LibreTranslate
     let factSw = "Translation failed.";
     try {
-      const translation = await axios.post("https://libretranslate.com/translate", {
-        q: factEn,
-        source: "en",
-        target: "sw",
-        format: "text"
-      }, {
-        headers: { "Content-Type": "application/json" }
-      });
+      const translation = await axios.post(
+        "https://libretranslate.com/translate",
+        {
+          q: factEn,
+          source: "en",
+          target: "sw",
+          format: "text",
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       factSw = translation.data.translatedText;
     } catch (err) {
@@ -96,19 +99,12 @@ cron.schedule("0 */5 * * * *", async () => {
 
     for (const groupId of autoFactGroups) {
       try {
-        await globalSock.sendMessage(groupId, {
-          text: `🧠 *Random Fact*\n\n${factEn}\n\n*🌍 Swahili:* ${factSw}`,
-          contextInfo: {
-            externalAdReply: {
-              title: "Did You Know?",
-              body: factEn,
-              mediaType: 1,
-              thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
-              sourceUrl: "https://uselessfacts.jsph.pl/",
-              renderLargerThumbnail: true,
-            },
-          },
-        });
+        await replyWithContext(
+          globalSock,
+          groupId,
+          null,
+          `🧠 *Random Fact*\n\n${factEn}\n\n*🌍 Swahili:* ${factSw}`
+        );
       } catch (err) {
         console.error(`Failed to send fact to ${groupId}:`, err);
       }
