@@ -15,7 +15,12 @@ zokou({
   const repondre = async (text) => {
     await sock.sendMessage(jid, {
       text,
-      contextInfo: {
+      contextInfo: {forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'ALONE Queen MD V²',
+              serverMessageId: 143},
         externalAdReply: {
           title: "Movie Finder",
           body: "Powered by ALONE MD V²",
@@ -45,14 +50,19 @@ zokou({
     await sock.sendMessage(jid, {
       image: { url: movie.image },
       caption,
-      contextInfo: {
+      contextInfo: {forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'ALONE Queen MD V²',
+              serverMessageId: 143},
         externalAdReply: {
           title: movie.title,
           body: "Tap to download or watch",
           thumbnailUrl: movie.image,
           sourceUrl: movie.url,
           mediaType: 1,
-          renderLargerThumbnail: true,
+          renderLargerThumbnail: false,
         },
       },
     }, { quoted: ms });
@@ -79,7 +89,7 @@ zokou({
           body: "Enjoy using ALONE MD ",
           thumbnailUrl: "https://telegra.ph/file/7e0d3059fa1d30cfd278b.jpg",
           mediaType: 1,
-          renderLargerThumbnail: true,
+          renderLargerThumbnail: false,
         },
       },
     }, { quoted: ms });
@@ -105,7 +115,7 @@ zokou({
           thumbnailUrl: video.thumbnail,
           sourceUrl: videoUrl,
           mediaType: 1,
-          renderLargerThumbnail: true,
+          renderLargerThumbnail: false,
         },
       },
     }, { quoted: ms });
@@ -137,8 +147,6 @@ zokou({
           title,
           body: "Tap to watch on YouTube",
           mediaType: 1,
-          thumbnailUrl: thumbnail,
-          renderLargerThumbnail: true,
           showAdAttribution: false,
           forwardingScore: 999,
           isForwarded: true,
