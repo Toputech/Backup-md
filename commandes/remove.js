@@ -5,7 +5,7 @@ zokou({
   categorie: "Group",
   reaction: "✉️",
 }, async (jid, sock, data) => {
-  const { ms, arg, groupMetadata } = data;
+  const { ms, arg, groupMetadata, isGroup } = data;
 
   const replyWithContext = (text) =>
     sock.sendMessage(jid, {
@@ -30,7 +30,7 @@ zokou({
       },
     }, { quoted: ms });
 
-  // Fix: Reliable group check
+  // Ensure used only in group
   if (!jid.endsWith("@g.us")) return replyWithContext("This command can only be used in a group.");
 
   const senderId = ms.key.participant || ms.key.remoteJid;
@@ -40,7 +40,8 @@ zokou({
   if (!metadata) {
     try {
       metadata = await sock.groupMetadata(jid);
-    } catch {
+    } catch (err) {
+      console.error("Metadata fetch failed:", err);
       return replyWithContext("Couldn't fetch group metadata.");
     }
   }
@@ -55,26 +56,22 @@ zokou({
     return replyWithContext("Only group admins or super users can use this command.");
   }
 
-  if (!Array.isArray(arg) || !arg.length) return replyWithContext("Please provide a message to send.");
+  if (!arg || !arg.length) {
+    return replyWithContext("Please provide a message to send.");
+  }
 
   const textToSend = arg.join(" ");
   const members = metadata.participants.map(p => p.id);
-
   let failedCount = 0;
 
   for (const member of members) {
-    if (member === sock.user.id) continue;
+    if (member === sock.user.id) continue; // skip self
     try {
       await sock.sendMessage(member, {
-        text: `*Message from group ${metadata.subject}*\n\n${textToSend}`,
+        text: `*Message from group: ${metadata.subject}*\n\n${textToSend}`,
         contextInfo: {
           forwardingScore: 999,
           isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: "120363295141350550@newsletter",
-            newsletterName: "ALONE MD V²",
-            serverMessageId: 143,
-          },
           externalAdReply: {
             title: "Group Broadcast",
             body: `From ${ms.pushName || "Admin"}`,
@@ -84,11 +81,12 @@ zokou({
           },
         },
       });
-      await new Promise(r => setTimeout(r, 1000));
-    } catch {
+      await new Promise(r => setTimeout(r, 1200)); // delay to avoid rate-limit
+    } catch (err) {
+      console.error(`Failed to message ${member}:`, err);
       failedCount++;
     }
   }
 
-  return replyWithContext(`Sent message to ${members.length - failedCount} members. Failed: ${failedCount}`);
+  return replyWithContext(`✅ Sent to ${members.length - failedCount} members. Failed: ${failedCount}`);
 });
