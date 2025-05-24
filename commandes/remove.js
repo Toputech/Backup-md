@@ -5,10 +5,12 @@ zokou({
   categorie: "Group",
   reaction: "✉️",
 }, async (jid, sock, data) => {
-  const { ms, arg, groupMetadata, isGroup } = data;
+  const { ms, arg, groupMetadata } = data;
+
+  const chatId = ms.key.remoteJid; // Correct source for chat ID
 
   const replyWithContext = (text) =>
-    sock.sendMessage(jid, {
+    sock.sendMessage(chatId, {
       text,
       contextInfo: {
         forwardingScore: 999,
@@ -25,21 +27,21 @@ zokou({
           thumbnailUrl: "https://i.ibb.co/album/thumbnail.jpg",
           sourceUrl: "https://youtube.com/@alone-bot",
           renderLargerThumbnail: true,
-          showAdAttribution: false,
         },
       },
     }, { quoted: ms });
 
-  // Ensure used only in group
-  if (!jid.endsWith("@g.us")) return replyWithContext("This command can only be used in a group.");
+  if (!chatId.endsWith("@g.us")) {
+    return replyWithContext("This command can only be used in a group.");
+  }
 
-  const senderId = ms.key.participant || ms.key.remoteJid;
-  const isSuperUser = superUser.includes(senderId);
+  const senderId = ms.participant || ms.key.participant || ms.key.remoteJid;
+  const isSuper = superUser.includes(senderId);
 
   let metadata = groupMetadata;
   if (!metadata) {
     try {
-      metadata = await sock.groupMetadata(jid);
+      metadata = await sock.groupMetadata(chatId);
     } catch (err) {
       console.error("Metadata fetch failed:", err);
       return replyWithContext("Couldn't fetch group metadata.");
@@ -52,41 +54,42 @@ zokou({
 
   const isAdmin = admins.includes(senderId);
 
-  if (!isSuperUser && !isAdmin) {
+  if (!isSuper && !isAdmin) {
     return replyWithContext("Only group admins or super users can use this command.");
   }
 
-  if (!arg || !arg.length) {
+  if (!arg || arg.length === 0) {
     return replyWithContext("Please provide a message to send.");
   }
 
   const textToSend = arg.join(" ");
   const members = metadata.participants.map(p => p.id);
-  let failedCount = 0;
+  let failedCount = 0, sentCount = 0;
 
   for (const member of members) {
-    if (member === sock.user.id) continue; // skip self
+    if (member.split("@")[0] === sock.user.id.split(":")[0]) continue; // skip self
+
     try {
       await sock.sendMessage(member, {
-        text: `*Message from group: ${metadata.subject}*\n\n${textToSend}`,
+        text: `📢 *Message from group: ${metadata.subject}*\n\n${textToSend}`,
         contextInfo: {
           forwardingScore: 999,
           isForwarded: true,
           externalAdReply: {
             title: "Group Broadcast",
-            body: `From ${ms.pushName || "Admin"}`,
+            body: `From ${ms.pushName || "an Admin"}`,
             mediaType: 1,
             renderLargerThumbnail: false,
-            showAdAttribution: false,
           },
         },
       });
-      await new Promise(r => setTimeout(r, 1200)); // delay to avoid rate-limit
+      sentCount++;
+      await new Promise(r => setTimeout(r, 1300)); // Slight delay to avoid rate-limit
     } catch (err) {
-      console.error(`Failed to message ${member}:`, err);
+      console.error(`Failed to message ${member}:`, err?.message || err);
       failedCount++;
     }
   }
 
-  return replyWithContext(`✅ Sent to ${members.length - failedCount} members. Failed: ${failedCount}`);
+  return replyWithContext(`✅ Sent to ${sentCount} members.\n❌ Failed: ${failedCount}`);
 });
