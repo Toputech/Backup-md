@@ -273,7 +273,6 @@ zokou({
   }
 });
 
-
 zokou({
   nomCom: "lyrics",
   aliases: ["ly", "songlyrics", "lyric"],
@@ -312,7 +311,8 @@ zokou({
 
   const sources = [
     async () => {
-      const res = await axios.get(`https://api.popcat.xyz/lyrics?song=${encodeURIComponent(query)}`);
+      const res = await axios.get(`https://api.popcat.xyz/lyrics?song=${encodeURIComponent(query)}`).catch(() => null);
+      if (!res || !res.data || !res.data.lyrics) throw new Error("Popcat failed");
       return {
         title: res.data.title,
         author: res.data.artist,
@@ -322,7 +322,8 @@ zokou({
       };
     },
     async () => {
-      const res = await axios.get(`https://some-random-api.ml/lyrics?title=${encodeURIComponent(query)}`);
+      const res = await axios.get(`https://some-random-api.ml/lyrics?title=${encodeURIComponent(query)}`).catch(() => null);
+      if (!res || !res.data || !res.data.lyrics) throw new Error("Some-Random-API failed");
       return {
         title: res.data.title,
         author: res.data.author || "Unknown",
@@ -332,7 +333,8 @@ zokou({
       };
     },
     async () => {
-      const res = await axios.get(`https://lyrist.vercel.app/api/${encodeURIComponent(query)}`);
+      const res = await axios.get(`https://lyrist.vercel.app/api/${encodeURIComponent(query)}`).catch(() => null);
+      if (!res || !res.data || !res.data.content) throw new Error("Lyrist failed");
       return {
         title: query,
         author: "Unknown",
@@ -355,10 +357,9 @@ zokou({
     }
   }
 
-  if (!lyricsData) return repondre("Couldn't find lyrics from any source. Try again later or with a different song.");
+  if (!lyricsData) return repondre("Couldn't find lyrics from any source. Try again with a different song title.");
 
   const { title, author, lyrics, thumbnail, link } = lyricsData;
-
   const message = `*🎵 Title:* ${title}\n*👤 Artist:* ${author}\n\n${lyrics.slice(0, 4096)}`;
 
   await sock.sendMessage(jid, {
