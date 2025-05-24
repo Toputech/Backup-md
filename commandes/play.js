@@ -4,6 +4,7 @@ const ytSearch = require("yt-search");
 const ytdl = require("ytdl-core");
 const fs = require("fs");
 const path = require("path");
+const conf = require("../set");
 
 zokou(
   {
