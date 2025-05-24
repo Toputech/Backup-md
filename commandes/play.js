@@ -6,6 +6,30 @@ const fs = require("fs");
 const path = require("path");
 const conf = require("../set");
 
+const MAX_FILE_SIZE_BYTES = 16 * 1024 * 1024; // 16MB
+
+async function downloadLimitedTrailer(url, outputPath) {
+  return new Promise((resolve, reject) => {
+    const stream = ytdl(url, { quality: "highestvideo" });
+    const writeStream = fs.createWriteStream(outputPath);
+    let downloadedSize = 0;
+
+    stream.on("data", (chunk) => {
+      downloadedSize += chunk.length;
+      if (downloadedSize > MAX_FILE_SIZE_BYTES) {
+        stream.destroy(); // Stop ytdl download
+        writeStream.end(); // Close file write stream
+      }
+    });
+
+    stream.pipe(writeStream);
+
+    writeStream.on("finish", () => resolve());
+    stream.on("error", reject);
+    writeStream.on("error", reject);
+  });
+}
+
 zokou(
   {
     nomCom: "movie",
@@ -48,7 +72,7 @@ zokou(
     const query = arg.join(" ");
     await repondre("🔍 Searching for movie and trailer, please wait...");
 
-    const apiKey = "38f19ae1"; // You can replace this with process.env.OMDB_API_KEY
+    const apiKey = "38f19ae1"; // Replace with your own OMDB API key
 
     try {
       // Fetch movie search
@@ -80,26 +104,21 @@ zokou(
       const tempFile = path.join(__dirname, `trailer_${Date.now()}.mp4`);
 
       try {
-        // Download the trailer
-        await new Promise((resolve, reject) => {
-          ytdl(trailerUrl, { quality: "highest" })
-            .pipe(fs.createWriteStream(tempFile))
-            .on("finish", resolve)
-            .on("error", reject);
-        });
+        // Download trailer limited by 16MB
+        await downloadLimitedTrailer(trailerUrl, tempFile);
 
-        // Check if file exists
         if (!fs.existsSync(tempFile)) {
           return repondre("❌ Trailer download failed. File not saved.");
         }
 
-        const buffer = fs.readFileSync(tempFile);
-
         await sock.sendMessage(
           jid,
           {
-            video: buffer,
-            caption: `🎬 *${movie.Title}* (${movie.Year})\n⭐ *IMDb:* ${movie.imdbRating}/10\n\n📖 *Plot:* ${movie.Plot}`,
+            video: {
+              url: tempFile,
+              mimetype: "video/mp4",
+              caption: `🎬 *${movie.Title}* (${movie.Year})\n⭐ *IMDb:* ${movie.imdbRating}/10\n\n📖 *Plot:* ${movie.Plot}`,
+            },
             contextInfo: {
               forwardingScore: 999,
               isForwarded: true,
@@ -127,7 +146,6 @@ zokou(
         console.error("Trailer download error:", dlErr);
         return repondre("❌ Error downloading trailer from YouTube.");
       } finally {
-        // Cleanup
         if (fs.existsSync(tempFile)) {
           fs.unlink(tempFile, (err) => {
             if (err) console.error("Cleanup error:", err);
