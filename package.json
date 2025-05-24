@@ -38,6 +38,7 @@
     "aptoide-scraper": "^1.0.1",
     "api-dylux" : "^1.8.5",
     "acrcloud": "^1.4.0",
+   "translate-google": "^2.4.4",
    "music-lyrics": "^2.0.2",
    "node-lyrics": "^2.1.3",
     "axios": "^1.4.0",
