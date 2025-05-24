@@ -97,7 +97,7 @@ async function translateToSwahili(text) {
 }
 
 // Send random facts every 5 minutes
-cron.schedule("0 */5 * * * *", async () => {
+cron.schedule("0 */45 * * * *", async () => {
   if (!globalSock) {
     console.log("No sock connection available yet.");
     return;
