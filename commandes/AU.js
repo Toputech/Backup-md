@@ -2,7 +2,6 @@ const { zokou } = require("../framework/zokou");
 const cron = require("node-cron");
 const fs = require("fs");
 const axios = require("axios");
-const translate = require("translate-google");
 const conf = require(__dirname + "/../set");
 
 const SETTINGS_FILE = "./autofact-groups.json";
@@ -11,6 +10,24 @@ let autoFactGroups = fs.existsSync(SETTINGS_FILE)
   : [];
 
 let globalSock = null; // used by cron job
+
+// LibreTranslate API
+async function translateLibre(text, targetLang = "sw") {
+  try {
+    const response = await axios.post("https://libretranslate.de/translate", {
+      q: text,
+      source: "en",
+      target: targetLang,
+      format: "text"
+    }, {
+      headers: { "Content-Type": "application/json" }
+    });
+    return response.data.translatedText;
+  } catch (err) {
+    console.error("LibreTranslate error:", err.message);
+    return text; // fallback
+  }
+}
 
 // Helper function to reply with context
 const replyWithContext = async (sock, jid, ms, text) => {
@@ -78,6 +95,8 @@ zokou(
 
 // Scheduled Task - Every 5 minutes
 cron.schedule("0 */5 * * * *", async () => {
+  console.log("⏰ Running cron job...");
+
   if (!globalSock) {
     console.log("No sock connection available yet.");
     return;
@@ -85,12 +104,11 @@ cron.schedule("0 */5 * * * *", async () => {
 
   try {
     const res = await axios.get("https://uselessfacts.jsph.pl/random.json?language=en");
-    const factEn = res.data.text;
+    const factEn = res.data?.text;
 
-    // Translate to Swahili
     let factSw = factEn;
     try {
-      factSw = await translate(factEn, { from: "en", to: "sw" });
+      factSw = await translateLibre(factEn);
     } catch (err) {
       console.error("Translation error:", err.message);
     }
