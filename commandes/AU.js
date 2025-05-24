@@ -3,7 +3,7 @@ const cron = require("node-cron");
 const fs = require("fs");
 const axios = require("axios");
 const conf = require(__dirname + "/../set");
-const googleTranslate = require("@vitalets/google-translate-api");
+const translate = require("translate-google"); // Changed here
 
 const SETTINGS_FILE = "./autofact-groups.json";
 let autoFactGroups = fs.existsSync(SETTINGS_FILE)
@@ -68,21 +68,15 @@ zokou(
   }
 );
 
-// Improved translation function
+// Updated translation function using translate-google package
 async function translateToSwahili(text) {
   try {
-    console.log("Translating to Swahili...");
-    const res = await googleTranslate(text, { from: "en", to: "sw" });
-
-    if (res?.text) {
-      console.log("Translated successfully:", res.text);
-      return res.text;
-    } else {
-      console.warn("Translation returned empty.");
-      return "⚠️ Translation returned empty.";
-    }
+    console.log("Translating to Swahili:", text);
+    const translated = await translate(text, { from: "en", to: "sw" });
+    console.log("Translated successfully:", translated);
+    return translated;
   } catch (err) {
-    console.error("Translation error:", err.message || err);
+    console.error("Translation error:", err);
     return "⚠️ Kiswahili translation failed.";
   }
 }
