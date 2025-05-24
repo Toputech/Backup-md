@@ -2,23 +2,23 @@ const { zokou } = require("../framework/zokou");
 const cron = require("node-cron");
 const fs = require("fs");
 const axios = require("axios");
+const translate = require("translate-google");
 const conf = require(__dirname + "/../set");
-const translate = require("translate-google"); // Changed here
 
 const SETTINGS_FILE = "./autofact-groups.json";
 let autoFactGroups = fs.existsSync(SETTINGS_FILE)
   ? JSON.parse(fs.readFileSync(SETTINGS_FILE))
   : [];
 
-let globalSock = null;
+let globalSock = null; // used by cron job
 
-// Helper to send context message
+// Helper function to reply with context
 const replyWithContext = async (sock, jid, ms, text) => {
-  const quoted = ms ? { quoted: ms } : {};
   await sock.sendMessage(
     jid,
     {
       text,
+      quoted: ms || undefined,
       contextInfo: {
         externalAdReply: {
           title: "ALONE MD V² FACT MEMORY",
@@ -29,12 +29,11 @@ const replyWithContext = async (sock, jid, ms, text) => {
           renderLargerThumbnail: true,
         },
       },
-    },
-    quoted
+    }
   );
 };
 
-// Command to enable/disable autofacts
+// Command: /autofacts on|off
 zokou(
   {
     nomCom: "autofacts",
@@ -42,47 +41,43 @@ zokou(
     reaction: "🧠",
   },
   async (jid, sock, data) => {
-    globalSock = sock;
-    const { arg, groupMetadata, ms, isGroup } = data;
-    const groupId = isGroup ? groupMetadata?.id : jid;
+    try {
+      console.log("✅ /autofacts command received");
 
-    if (!arg[0]) return replyWithContext(sock, jid, ms, "Please use 'on' or 'off'.");
+      globalSock = sock;
+      const { arg, groupMetadata, ms, isGroup } = data;
+      const groupId = isGroup ? groupMetadata?.id : jid;
 
-    if (arg[0] === "on") {
-      if (!autoFactGroups.includes(groupId)) {
-        autoFactGroups.push(groupId);
-        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
-        return replyWithContext(sock, jid, ms, "✅ Auto Fact messages enabled.");
-      } else {
-        return replyWithContext(sock, jid, ms, "Auto Fact is already enabled.");
+      if (!arg[0]) {
+        return replyWithContext(sock, jid, ms, "Please use 'on' or 'off'.");
       }
-    }
 
-    if (arg[0] === "off") {
-      autoFactGroups = autoFactGroups.filter((id) => id !== groupId);
-      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
-      return replyWithContext(sock, jid, ms, "❌ Auto Fact messages disabled.");
-    }
+      if (arg[0] === "on") {
+        if (!autoFactGroups.includes(groupId)) {
+          autoFactGroups.push(groupId);
+          fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
+          return replyWithContext(sock, jid, ms, "✅ Auto Fact messages enabled.");
+        } else {
+          return replyWithContext(sock, jid, ms, "Auto Fact is already enabled.");
+        }
+      }
 
-    return replyWithContext(sock, jid, ms, "Invalid argument. Use 'on' or 'off'.");
+      if (arg[0] === "off") {
+        autoFactGroups = autoFactGroups.filter(id => id !== groupId);
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
+        return replyWithContext(sock, jid, ms, "❌ Auto Fact messages disabled.");
+      }
+
+      return replyWithContext(sock, jid, ms, "Invalid argument. Use 'on' or 'off'.");
+    } catch (err) {
+      console.error("❌ autofacts command error:", err);
+      return sock.sendMessage(jid, { text: "⚠️ Error handling /autofacts command." });
+    }
   }
 );
 
-// Updated translation function using translate-google package
-async function translateToSwahili(text) {
-  try {
-    console.log("Translating to Swahili:", text);
-    const translated = await translate(text, { from: "en", to: "sw" });
-    console.log("Translated successfully:", translated);
-    return translated;
-  } catch (err) {
-    console.error("Translation error:", err);
-    return "⚠️ Kiswahili translation failed.";
-  }
-}
-
-// Scheduled task to send facts
-cron.schedule("0 */45 * * * *", async () => {
+// Scheduled Task - Every 5 minutes
+cron.schedule("0 */5 * * * *", async () => {
   if (!globalSock) {
     console.log("No sock connection available yet.");
     return;
@@ -92,12 +87,16 @@ cron.schedule("0 */45 * * * *", async () => {
     const res = await axios.get("https://uselessfacts.jsph.pl/random.json?language=en");
     const factEn = res.data.text;
 
-    const factSw = await translateToSwahili(factEn);
+    // Translate to Swahili
+    let factSw = factEn;
+    try {
+      factSw = await translate(factEn, { from: "en", to: "sw" });
+    } catch (err) {
+      console.error("Translation error:", err.message);
+    }
 
     for (const groupId of autoFactGroups) {
       try {
-        console.log("Sending fact to group:", groupId);
-
         await replyWithContext(
           globalSock,
           groupId,
@@ -105,10 +104,10 @@ cron.schedule("0 */45 * * * *", async () => {
           `🧠 *Random Fact*\n\n🗣️ *English:*\n${factEn}\n\n🌍 *Kiswahili:*\n${factSw}`
         );
       } catch (err) {
-        console.error(`Failed to send fact to ${groupId}:`, err);
+        console.error(`❌ Failed to send to ${groupId}:`, err.message);
       }
     }
   } catch (err) {
-    console.error("Fact fetch error:", err.message);
+    console.error("❌ Error fetching fact:", err.message);
   }
 });
