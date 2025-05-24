@@ -1,4 +1,10 @@
-const { zokou, superUser } = require("../framework/zokou");
+const { zokou } = require("../framework/zokou");
+
+// Define super users here, change the IDs to your actual super user WhatsApp IDs
+const superUser = [
+  "1234567890@s.whatsapp.net",
+  "0987654321@s.whatsapp.net"
+];
 
 zokou({
   nomCom: "sendall",
@@ -7,7 +13,7 @@ zokou({
 }, async (jid, sock, data) => {
   const { ms, arg, groupMetadata } = data;
 
-  const chatId = ms.key.remoteJid; // Correct source for chat ID
+  const chatId = ms.key.remoteJid;
 
   const replyWithContext = (text) =>
     sock.sendMessage(chatId, {
@@ -35,7 +41,9 @@ zokou({
     return replyWithContext("This command can only be used in a group.");
   }
 
-  const senderId = ms.participant || ms.key.participant || ms.key.remoteJid;
+  const senderId = ms.key.participant || ms.key.remoteJid;
+
+  // Check if sender is super user
   const isSuper = superUser.includes(senderId);
 
   let metadata = groupMetadata;
@@ -67,7 +75,7 @@ zokou({
   let failedCount = 0, sentCount = 0;
 
   for (const member of members) {
-    if (member.split("@")[0] === sock.user.id.split(":")[0]) continue; // skip self
+    if (member.split("@")[0] === sock.user.id.split(":")[0]) continue; // skip bot itself
 
     try {
       await sock.sendMessage(member, {
@@ -84,7 +92,7 @@ zokou({
         },
       });
       sentCount++;
-      await new Promise(r => setTimeout(r, 1300)); // Slight delay to avoid rate-limit
+      await new Promise(r => setTimeout(r, 1300)); // Delay to avoid rate limits
     } catch (err) {
       console.error(`Failed to message ${member}:`, err?.message || err);
       failedCount++;
