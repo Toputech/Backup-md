@@ -82,9 +82,13 @@ zokou({
         text: `📢 *Message from group: ${metadata.subject}*\n\n${textToSend}`,
         contextInfo: {
           forwardingScore: 999,
-          isForwarded: true,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363295141350550@newsletter',
+              newsletterName: 'ALONE MD V²',
+              serverMessageId: 143},
           externalAdReply: {
-            title: "Group Broadcast",
+            title: "🎭ALONE MD GROUP BROADCASTER🏆",
             body: `From ${ms.pushName || "an Admin"}`,
             mediaType: 1,
             renderLargerThumbnail: false,
