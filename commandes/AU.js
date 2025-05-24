@@ -3,7 +3,7 @@ const cron = require("node-cron");
 const fs = require("fs");
 const axios = require("axios");
 const conf = require(__dirname + "/../set");
-const googleTranslate = require('@vitalets/google-translate-api');
+const googleTranslate = require("@vitalets/google-translate-api");
 
 const SETTINGS_FILE = "./autofact-groups.json";
 let autoFactGroups = fs.existsSync(SETTINGS_FILE)
@@ -12,7 +12,7 @@ let autoFactGroups = fs.existsSync(SETTINGS_FILE)
 
 let globalSock = null;
 
-// Context reply helper
+// Helper to send context message
 const replyWithContext = async (sock, jid, ms, text) => {
   const quoted = ms ? { quoted: ms } : {};
   await sock.sendMessage(
@@ -34,69 +34,60 @@ const replyWithContext = async (sock, jid, ms, text) => {
   );
 };
 
-// Enable/disable autofacts
-zokou({
-  nomCom: "autofacts",
-  categorie: "Group",
-  reaction: "🧠",
-}, async (jid, sock, data) => {
-  globalSock = sock;
-  const { arg, groupMetadata, ms, isGroup } = data;
-  const groupId = isGroup ? groupMetadata?.id : jid;
+// Command to enable/disable autofacts
+zokou(
+  {
+    nomCom: "autofacts",
+    categorie: "Group",
+    reaction: "🧠",
+  },
+  async (jid, sock, data) => {
+    globalSock = sock;
+    const { arg, groupMetadata, ms, isGroup } = data;
+    const groupId = isGroup ? groupMetadata?.id : jid;
 
-  if (!arg[0]) return replyWithContext(sock, jid, ms, "Please use 'on' or 'off'.");
+    if (!arg[0]) return replyWithContext(sock, jid, ms, "Please use 'on' or 'off'.");
 
-  if (arg[0] === "on") {
-    if (!autoFactGroups.includes(groupId)) {
-      autoFactGroups.push(groupId);
+    if (arg[0] === "on") {
+      if (!autoFactGroups.includes(groupId)) {
+        autoFactGroups.push(groupId);
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
+        return replyWithContext(sock, jid, ms, "✅ Auto Fact messages enabled.");
+      } else {
+        return replyWithContext(sock, jid, ms, "Auto Fact is already enabled.");
+      }
+    }
+
+    if (arg[0] === "off") {
+      autoFactGroups = autoFactGroups.filter((id) => id !== groupId);
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
-      return replyWithContext(sock, jid, ms, "✅ Auto Fact messages enabled.");
-    } else {
-      return replyWithContext(sock, jid, ms, "Auto Fact is already enabled.");
+      return replyWithContext(sock, jid, ms, "❌ Auto Fact messages disabled.");
     }
+
+    return replyWithContext(sock, jid, ms, "Invalid argument. Use 'on' or 'off'.");
   }
+);
 
-  if (arg[0] === "off") {
-    autoFactGroups = autoFactGroups.filter(id => id !== groupId);
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(autoFactGroups));
-    return replyWithContext(sock, jid, ms, "❌ Auto Fact messages disabled.");
-  }
-
-  return replyWithContext(sock, jid, ms, "Invalid argument. Use 'on' or 'off'.");
-});
-
-// Reliable Kiswahili translation function
+// Improved translation function
 async function translateToSwahili(text) {
-  // Try LibreTranslate mirror first
   try {
-    const res = await axios.post("https://translate.argosopentech.com/translate", {
-      q: text,
-      source: "en",
-      target: "sw",
-      format: "text",
-    }, {
-      headers: { "Content-Type": "application/json" }
-    });
+    console.log("Translating to Swahili...");
+    const res = await googleTranslate(text, { from: "en", to: "sw" });
 
-    if (res.data?.translatedText) {
-      return res.data.translatedText;
+    if (res?.text) {
+      console.log("Translated successfully:", res.text);
+      return res.text;
+    } else {
+      console.warn("Translation returned empty.");
+      return "⚠️ Translation returned empty.";
     }
   } catch (err) {
-    console.warn("LibreTranslate failed:", err.message || err);
+    console.error("Translation error:", err.message || err);
+    return "⚠️ Kiswahili translation failed.";
   }
-
-  // Fallback: Google Translate unofficial
-  try {
-    const res = await googleTranslate(text, { from: 'en', to: 'sw' });
-    return res.text;
-  } catch (err) {
-    console.error("Google Translate failed:", err.message || err);
-  }
-
-  return "⚠️ Kiswahili translation unavailable.";
 }
 
-// Send random facts every 5 minutes
+// Scheduled task to send facts
 cron.schedule("0 */45 * * * *", async () => {
   if (!globalSock) {
     console.log("No sock connection available yet.");
@@ -111,11 +102,13 @@ cron.schedule("0 */45 * * * *", async () => {
 
     for (const groupId of autoFactGroups) {
       try {
+        console.log("Sending fact to group:", groupId);
+
         await replyWithContext(
           globalSock,
           groupId,
           null,
-          `🧠 *Random Fact*\n\n${factEn}\n\n*🌍 Kiswahili:* ${factSw}`
+          `🧠 *Random Fact*\n\n🗣️ *English:*\n${factEn}\n\n🌍 *Kiswahili:*\n${factSw}`
         );
       } catch (err) {
         console.error(`Failed to send fact to ${groupId}:`, err);
