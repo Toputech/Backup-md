@@ -6,29 +6,6 @@ const fs = require("fs");
 const path = require("path");
 const conf = require("../set");
 
-const MAX_FILE_SIZE_BYTES = 16 * 1024 * 1024; // 16MB
-
-async function downloadLimitedTrailer(url, outputPath) {
-  return new Promise((resolve, reject) => {
-    const stream = ytdl(url, { quality: "highestvideo" });
-    const writeStream = fs.createWriteStream(outputPath);
-    let downloadedSize = 0;
-
-    stream.on("data", (chunk) => {
-      downloadedSize += chunk.length;
-      if (downloadedSize > MAX_FILE_SIZE_BYTES) {
-        stream.destroy(); // Stop ytdl download
-        writeStream.end(); // Close file write stream
-      }
-    });
-
-    stream.pipe(writeStream);
-
-    writeStream.on("finish", () => resolve());
-    stream.on("error", reject);
-    writeStream.on("error", reject);
-  });
-}
 
 zokou(
   {
@@ -40,121 +17,90 @@ zokou(
   async (jid, sock, data) => {
     const { arg, ms } = data;
 
+    const contextInfo = {
+      forwardingScore: 999,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: "120363295141350550@newsletter",
+        newsletterName: "ALONE Queen MD V²",
+        serverMessageId: 143,
+      },
+      externalAdReply: {
+        title: "Movie Finder",
+        body: "Powered by ALONE MD V²",
+        thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+        sourceUrl: "https://github.com/Zokou1/ALONE-MD",
+        mediaType: 1,
+        renderLargerThumbnail: false,
+      },
+    };
+
     const repondre = async (text) => {
-      await sock.sendMessage(
+      return sock.sendMessage(
         jid,
         {
           text,
-          contextInfo: {
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: "120363295141350550@newsletter",
-              newsletterName: "ALONE Queen MD V²",
-              serverMessageId: 143,
-            },
-            externalAdReply: {
-              title: "Movie Finder",
-              body: "Powered by ALONE MD V²",
-              thumbnailUrl: "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
-              sourceUrl: "https://github.com/Zokou1/ALONE-MD",
-              mediaType: 1,
-              renderLargerThumbnail: false,
-            },
-          },
+          contextInfo,
         },
         { quoted: ms }
       );
     };
 
-    if (!arg[0]) return repondre("Please provide a movie title.");
+    if (!arg[0]) return repondre("❌ Please provide a movie title.");
 
     const query = arg.join(" ");
-    await repondre("🔍 Searching for movie and trailer, please wait...");
+    await repondre("🔍 Searching for movie and trailer...");
 
-    const apiKey = "38f19ae1"; // Replace with your own OMDB API key
+    const apiKey = "38f19ae1"; // Replace with process.env.OMDB_API_KEY in production
 
     try {
-      // Fetch movie search
       const searchRes = await axios.get(`http://www.omdbapi.com/?s=${encodeURIComponent(query)}&apikey=${apiKey}`);
       const searchData = searchRes.data;
 
-      if (!searchData || searchData.Response === "False") {
-        return repondre(`❌ Movie not found: ${searchData.Error || "Unknown error."}`);
-      }
+      if (searchData.Response === "False") return repondre(`❌ Movie not found: ${searchData.Error}`);
 
-      const firstMovie = searchData.Search[0];
-
-      // Fetch movie details
-      const detailsRes = await axios.get(`http://www.omdbapi.com/?i=${firstMovie.imdbID}&apikey=${apiKey}`);
+      const movieID = searchData.Search[0].imdbID;
+      const detailsRes = await axios.get(`http://www.omdbapi.com/?i=${movieID}&apikey=${apiKey}`);
       const movie = detailsRes.data;
 
-      if (!movie || movie.Response === "False") {
-        return repondre(`❌ Error retrieving movie details: ${movie.Error || "Unknown error."}`);
-      }
+      if (movie.Response === "False") return repondre(`❌ Error fetching movie details: ${movie.Error}`);
 
-      // Search YouTube for trailer
       const ytResult = await ytSearch(`${movie.Title} trailer`);
-      if (!ytResult.videos || ytResult.videos.length === 0) {
-        return repondre("❌ No trailer found on YouTube.");
-      }
+      const trailer = ytResult.videos.find((v) => v.seconds <= 240); // max 4 min
 
-      const trailer = ytResult.videos[0];
-      const trailerUrl = trailer.url;
-      const tempFile = path.join(__dirname, `trailer_${Date.now()}.mp4`);
+      if (!trailer) return repondre("❌ No trailer found on YouTube.");
 
-      try {
-        // Download trailer limited by 16MB
-        await downloadLimitedTrailer(trailerUrl, tempFile);
+      const trailerInfo = await ytdl.getInfo(trailer.url);
+      const format = ytdl.chooseFormat(trailerInfo.formats, { quality: "18" });
 
-        if (!fs.existsSync(tempFile)) {
-          return repondre("❌ Trailer download failed. File not saved.");
-        }
+      if (!format || !format.contentLength) return repondre("❌ No downloadable video format available.");
 
-        await sock.sendMessage(
-          jid,
-          {
-            video: {
-              url: tempFile,
-              mimetype: "video/mp4",
-              caption: `🎬 *${movie.Title}* (${movie.Year})\n⭐ *IMDb:* ${movie.imdbRating}/10\n\n📖 *Plot:* ${movie.Plot}`,
-            },
-            contextInfo: {
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: "120363295141350550@newsletter",
-                newsletterName: "ALONE Queen MD V²",
-                serverMessageId: 143,
-              },
-              externalAdReply: {
-                title: movie.Title,
-                body: "Watch the trailer",
-                thumbnailUrl:
-                  movie.Poster !== "N/A"
-                    ? movie.Poster
-                    : "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
-                sourceUrl: `https://www.imdb.com/title/${movie.imdbID}`,
-                mediaType: 1,
-                renderLargerThumbnail: false,
-              },
+      const sizeMB = parseInt(format.contentLength, 10) / (1024 * 1024);
+      if (sizeMB > 100) return repondre("❌ Trailer is too large (over 100MB).");
+
+      await sock.sendMessage(
+        jid,
+        {
+          video: { stream: ytdl(trailer.url, { quality: "18" }) },
+          caption: `🎬 *${movie.Title}* (${movie.Year})\n⭐ *IMDb:* ${movie.imdbRating}/10\n\n📖 *Plot:* ${movie.Plot}`,
+          contextInfo: {
+            forwardingScore: 999,
+            isForwarded: true,
+            externalAdReply: {
+              title: movie.Title,
+              body: "Watch the trailer",
+              thumbnailUrl: movie.Poster !== "N/A" ? movie.Poster : "https://telegra.ph/file/94f5c37a2b1d6c93a97ae.jpg",
+              sourceUrl: `https://www.imdb.com/title/${movie.imdbID}`,
+              mediaType: 1,
+              renderLargerThumbnail: true,
             },
           },
-          { quoted: ms }
-        );
-      } catch (dlErr) {
-        console.error("Trailer download error:", dlErr);
-        return repondre("❌ Error downloading trailer from YouTube.");
-      } finally {
-        if (fs.existsSync(tempFile)) {
-          fs.unlink(tempFile, (err) => {
-            if (err) console.error("Cleanup error:", err);
-          });
-        }
-      }
+        },
+        { quoted: ms }
+      );
     } catch (err) {
-      console.error("Unhandled error:", err.stack || err);
-      return repondre("❌ Something went wrong. Please try again later.");
+      console.error("Movie trailer error:", err);
+      return repondre("❌ An error occurred. Please try again.");
     }
   }
 );
