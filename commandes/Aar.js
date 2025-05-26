@@ -1,9 +1,10 @@
 const {zokou} = require('../framework/zokou');
 const fs = require('fs');
 const getFBInfo = require("@xaviabot/fb-downloader");
-const { default: axios } = require('axios');
 
-// In-memory map to track users waiting to send FB links
+ const axios = require("axios");
+
+// Track users waiting to send Facebook links
 const waitingForFBLink = new Map();
 
 zokou(
@@ -13,47 +14,51 @@ zokou(
     reaction: "⚡",
   },
   async (dest, zk, { repondre, ms, arg }) => {
-    if (!arg[0]) {
-      repondre("Send a Facebook / TikTok / Instagram video link or press buttons below.");
-      // Send buttons here to start interaction
+    const link = arg[0];
+
+    if (!link) {
+      // No link, show buttons
       await zk.sendMessage(
         dest,
         {
-          text: "Choose an option or send a link directly:",
+          text: "Send a Facebook / TikTok / Instagram link, or choose a button:",
           footer: "ALONE-MD Downloader",
-          buttons: [
+          templateButtons: [
             {
-              buttonId: "facebook_btn",
-              buttonText: { displayText: "📽️ Facebook Downloader" },
-              type: 1,
+              index: 1,
+              quickReplyButton: {
+                displayText: "📽️ Facebook Downloader",
+                id: "facebook_btn",
+              },
             },
             {
-              buttonId: "test_btn1",
-              buttonText: { displayText: "🧪 Test 1" },
-              type: 1,
+              index: 2,
+              quickReplyButton: {
+                displayText: "🧪 Test 1",
+                id: "test_btn1",
+              },
             },
             {
-              buttonId: "test_btn2",
-              buttonText: { displayText: "🧪 Test 2" },
-              type: 1,
+              index: 3,
+              quickReplyButton: {
+                displayText: "🧪 Test 2",
+                id: "test_btn2",
+              },
             },
           ],
-          headerType: 1,
         },
         { quoted: ms }
       );
       return;
     }
 
-    const url = arg[0].toLowerCase();
-
-    // Detect platform
+    const url = link.toLowerCase();
     let platform = null;
     if (url.includes("facebook.com") || url.includes("fb.watch")) platform = "facebook";
     else if (url.includes("tiktok.com")) platform = "tiktok";
     else if (url.includes("instagram.com/reel") || url.includes("instagram.com/p")) platform = "instagram";
     else {
-      repondre("Unsupported link. Only Facebook, TikTok, or Instagram allowed.");
+      repondre("❌ Invalid link. Only Facebook, TikTok, or Instagram supported.");
       return;
     }
 
@@ -86,55 +91,61 @@ zokou(
       }
 
       if (!data || !data.video) {
-        repondre(`❌ Failed to download the ${platform} video.`);
+        repondre("❌ Failed to download the video.");
         return;
       }
 
-      // Send thumbnail if exists
       if (data.thumb) {
         await zk.sendMessage(
           dest,
-          { image: { url: data.thumb }, caption: `*${platform.toUpperCase()}*\n${data.title}` },
+          {
+            image: { url: data.thumb },
+            caption: `*${platform.toUpperCase()}*\n${data.title}`,
+          },
           { quoted: ms }
         );
       }
 
-      // Send video with buttons
       await zk.sendMessage(
         dest,
         {
           video: { url: data.video },
           caption: `✅ Here's your ${platform} video!\n_Powered by ALONE-MD_`,
-          footer: "Choose an option below:",
-          buttons: [
+          footer: "Choose another option:",
+          templateButtons: [
             {
-              buttonId: "facebook_btn",
-              buttonText: { displayText: "📽️ Facebook Downloader" },
-              type: 1,
+              index: 1,
+              quickReplyButton: {
+                displayText: "📽️ Facebook Downloader",
+                id: "facebook_btn",
+              },
             },
             {
-              buttonId: "test_btn1",
-              buttonText: { displayText: "🧪 Test 1" },
-              type: 1,
+              index: 2,
+              quickReplyButton: {
+                displayText: "🧪 Test 1",
+                id: "test_btn1",
+              },
             },
             {
-              buttonId: "test_btn2",
-              buttonText: { displayText: "🧪 Test 2" },
-              type: 1,
+              index: 3,
+              quickReplyButton: {
+                displayText: "🧪 Test 2",
+                id: "test_btn2",
+              },
             },
           ],
-          headerType: 4,
         },
         { quoted: ms }
       );
     } catch (error) {
       console.error("AutoDL error:", error);
-      repondre("❌ Something went wrong while downloading.");
+      repondre("❌ Error occurred while downloading.");
     }
   }
 );
 
-// Handle button clicks:
+// Button Handlers
 
 zokou({ nomCom: "facebook_btn" }, async (dest, zk, { repondre }) => {
   waitingForFBLink.set(dest, true);
@@ -142,39 +153,37 @@ zokou({ nomCom: "facebook_btn" }, async (dest, zk, { repondre }) => {
 });
 
 zokou({ nomCom: "test_btn1" }, async (dest, zk, { repondre }) => {
-  repondre("✅ Test button 1 clicked.");
+  repondre("✅ You clicked Test 1!");
 });
 
 zokou({ nomCom: "test_btn2" }, async (dest, zk, { repondre }) => {
-  repondre("✅ Test button 2 clicked.");
+  repondre("✅ You clicked Test 2!");
 });
 
-// Catch all text messages to listen for FB links after button 1:
+// Listen for reply after Facebook button
 
 zokou(
-  {
-    nomCom: "message",
-  },
-  async (dest, zk, { ms, repondre, text }) => {
+  { nomCom: "message" },
+  async (dest, zk, { ms, text, repondre }) => {
     if (!text) return;
 
     if (waitingForFBLink.get(dest)) {
-      if (text.includes("facebook.com") || text.includes("fb.watch") || text.includes("fbcdn.net")) {
+      if (text.includes("facebook.com") || text.includes("fb.watch")) {
         waitingForFBLink.delete(dest);
         try {
           await downloadFacebookVideo(text, dest, zk, ms, repondre);
         } catch (e) {
           console.error(e);
-          repondre("❌ Failed to download Facebook video.");
+          repondre("❌ Could not download the Facebook video.");
         }
       } else {
-        repondre("❌ That's not a valid Facebook video link. Please send a valid one.");
+        repondre("❌ Not a valid Facebook link.");
       }
     }
   }
 );
 
-// Helper function for Facebook download
+// Facebook video download helper
 
 async function downloadFacebookVideo(link, dest, zk, ms, repondre) {
   try {
@@ -187,13 +196,20 @@ async function downloadFacebookVideo(link, dest, zk, ms, repondre) {
       return;
     }
 
-    const caption = `*Title:* ${d.title}\nPowered by ALONE-MD`;
+    const caption = `*Title:* ${d.title}\n_Powered by ALONE-MD_`;
 
     if (d.thumb) {
       await zk.sendMessage(dest, { image: { url: d.thumb }, caption }, { quoted: ms });
     }
 
-    await zk.sendMessage(dest, { video: { url: d.hd || d.sd }, caption: "Here's your Facebook video!" }, { quoted: ms });
+    await zk.sendMessage(
+      dest,
+      {
+        video: { url: d.hd || d.sd },
+        caption: "✅ Here's your Facebook video!",
+      },
+      { quoted: ms }
+    );
   } catch (error) {
     console.error(error);
     repondre("❌ Error fetching Facebook video.");
