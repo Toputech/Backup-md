@@ -1,4 +1,7 @@
-const axios = require("axios");
+const {zokou} = require('../framework/zokou');
+const fs = require('fs');
+const getFBInfo = require("@xaviabot/fb-downloader");
+const { default: axios } = require('axios');
 
 // In-memory map to track users waiting to send FB links
 const waitingForFBLink = new Map();
