@@ -1,17 +1,16 @@
 <p align="center">
-  <img src="https://i.imgur.com/QvZxcC8.gif" alt="Cyber Terminal" width="100%" />
+  <img src="https://i.imgur.com/jE8eQsP.jpeg" alt="ALONE MD Banner" width="60%" />
 </p>
 
 <h1 align="center">👾 A͛L͛O͛N͛E͛ M͛D͛ 👾</h1>
-<h3 align="center">"Life is such a bullshit without a WhatsApp bot"</h3>
+
+<h3 align="center">
+  Life is such a bullshit without a WhatsApp bot
+</h3>
 
 <p align="center">
   <strong>Alone MD WhatsApp bot developed by Toputech</strong><br>
   A fast, powerful and feature-rich multi-device WhatsApp bot built for automation and performance.
-</p>
-
-<p align="center">
-  <img src="https://i.imgur.com/jE8eQsP.jpeg" alt="Alone MD Banner" width="60%" />
 </p>
 
 ---
