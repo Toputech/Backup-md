@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.imgur.com/oFnEUS5.gif" alt="Cyber Terminal" width="100%" />
+  <img src="https://i.imgur.com/QvZxcC8.gif" alt="Cyber Terminal" width="100%" />
 </p>
 
 <h1 align="center">👾 A͛L͛O͛N͛E͛ M͛D͛ 👾</h1>
