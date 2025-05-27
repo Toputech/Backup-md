@@ -10,10 +10,26 @@ zokou(
     reaction: "⚡",
   },
   async (dest, zk, { repondre, ms, arg }) => {
-    const input = arg[0];
+    let url = arg[0];
 
-    if (!input) {
-      // Show interactive buttons if no link
+    // Button handling
+    if (ms.message?.buttonsResponseMessage) {
+      const selectedId = ms.message.buttonsResponseMessage.selectedButtonId;
+
+      if (selectedId === "facebook_btn") {
+        repondre("📽️ Please send your Facebook video link now.");
+        return;
+      } else if (selectedId === "test_btn1") {
+        repondre("🧪 You clicked Test 1.");
+        return;
+      } else if (selectedId === "test_btn2") {
+        repondre("🧪 You clicked Test 2.");
+        return;
+      }
+    }
+
+    if (!url) {
+      // Show buttons
       await zk.sendMessage(
         dest,
         {
@@ -48,7 +64,7 @@ zokou(
       return;
     }
 
-    const url = input.toLowerCase();
+    url = url.toLowerCase();
     let platform = null;
 
     if (url.includes("facebook.com") || url.includes("fb.watch")) platform = "facebook";
@@ -87,20 +103,20 @@ zokou(
         return;
       }
 
-      // Optional thumbnail
+      // Send thumbnail if exists
       if (thumb) {
-        await zk.sendMessage(dest, { image: { url: thumb }, caption: `*${platform.toUpperCase()}*\n${title}` }, { quoted: ms });
+        await zk.sendMessage(dest, {
+          image: { url: thumb },
+          caption: `*${platform.toUpperCase()}*\n${title}`
+        }, { quoted: ms });
       }
 
-      // Send video
-      await zk.sendMessage(
-        dest,
-        {
-          video: { url: videoUrl },
-          caption: `✅ Here's your ${platform} video!\n_Powered by ALONE-MD_`,
-        },
-        { quoted: ms }
-      );
+      // Send the video
+      await zk.sendMessage(dest, {
+        video: { url: videoUrl },
+        caption: `✅ Here's your ${platform} video!\n_Powered by ALONE-MD_`
+      }, { quoted: ms });
+
     } catch (err) {
       console.error("Downloader error:", err.message);
       repondre("❌ Error while downloading. Try another link.");
