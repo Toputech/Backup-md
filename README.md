@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.imgur.com/Xe7L2GM.gif" alt="Cyber Terminal" width="100%" />
+  <img src="https://i.imgur.com/oFnEUS5.gif" alt="Cyber Terminal" width="100%" />
 </p>
 
 <h1 align="center">👾 A͛L͛O͛N͛E͛ M͛D͛ 👾</h1>
@@ -18,11 +18,11 @@
 
 ## ⚙️ Features
 
-- ✅ Auto Downloader (`/autodl`)  
-- ✅ Anti-Spam Protection (`/antispam`)  
-- ✅ QR Code Pairing System  
-- ✅ Admin Tools & Moderation  
-- ✅ Media Converter / Tools  
+- ✅ Auto Downloader (`/autodl`)
+- ✅ Anti-Spam Protection (`/antispam`)
+- ✅ QR Code Pairing System
+- ✅ Admin Tools & Moderation
+- ✅ Media Converter / Tools
 
 ---
 
@@ -82,7 +82,7 @@
 
 Make sure you follow our WhatsApp channel for updates:
 
-[`WA Channel`](https://whatsapp.com/channel/0029VaeRrcnADTOKzivM0S1r)
+[`WA CHANNEL`](https://whatsapp.com/channel/0029VaeRrcnADTOKzivM0S1r)
 
 ---
 
