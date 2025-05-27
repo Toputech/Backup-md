@@ -1,25 +1,37 @@
 const { zokou } = require("../framework/zokou");
 
-// Define super users here, change the IDs to your actual super user WhatsApp IDs
-const superUser = [
-  "1234567890@s.whatsapp.net",
-  "0987654321@s.whatsapp.net"
-];
+// === ACTIVE USER TRACKING ===
+const activeUsers = new Set();
 
+sock.ev.on("messages.upsert", async ({ messages }) => {
+  for (const msg of messages) {
+    const jid = msg.key.participant || msg.key.remoteJid;
+    if (jid && jid.endsWith("@s.whatsapp.net")) {
+      activeUsers.add(jid);
+      setTimeout(() => activeUsers.delete(jid), 10 * 60 * 1000); // 10 min lifetime
+    }
+  }
+});
+
+// === GLOBAL COOLDOWN CONFIG ===
+let lastSendallTime = 0;
+let lastSenderName = null;
+const SENDALL_COOLDOWN = 12 * 60 * 60 * 1000; // 12 hours
+
+// === SENDALL COMMAND ===
 zokou({
   nomCom: "sendall",
   categorie: "Group",
   reaction: "✉️",
 }, async (jid, sock, data) => {
   const { ms, arg, groupMetadata } = data;
-
   const chatId = ms.key.remoteJid;
 
   const replyWithContext = (text) =>
     sock.sendMessage(chatId, {
       text,
       contextInfo: {
-        forwardingScore: 999,
+        forwardingScore: 1,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
           newsletterJid: "120363295141350550@newsletter",
@@ -41,10 +53,22 @@ zokou({
     return replyWithContext("This command can only be used in a group.");
   }
 
-  const senderId = ms.key.participant || ms.key.remoteJid;
+  // Check 12-hour cooldown
+  const now = Date.now();
+  if (now - lastSendallTime < SENDALL_COOLDOWN) {
+    const minutesLeft = Math.ceil((SENDALL_COOLDOWN - (now - lastSendallTime)) / 60000);
+    return replyWithContext(`⏱️ Someone already used this command.\nTry again in *${minutesLeft} minutes*.\n\nLast used by: *${lastSenderName || "unknown"}*`);
+  }
 
-  // Check if sender is super user
-  const isSuper = superUser.includes(senderId);
+  if (!arg || arg.length === 0) {
+    return replyWithContext("Please provide a message to send.");
+  }
+
+  // Set cooldown lock
+  lastSendallTime = now;
+  lastSenderName = ms.pushName || "Someone";
+
+  const textToSend = arg.join(" ");
 
   let metadata = groupMetadata;
   if (!metadata) {
@@ -56,52 +80,46 @@ zokou({
     }
   }
 
-  const admins = metadata.participants
-    .filter(p => p.admin !== null)
-    .map(p => p.id);
+  let members = metadata.participants.map(p => p.id);
 
-  const isAdmin = admins.includes(senderId);
+  // Prioritize active users
+  const onlineFirst = members.filter(id => activeUsers.has(id));
+  const offlineLater = members.filter(id => !activeUsers.has(id));
+  members = [...onlineFirst, ...offlineLater];
 
-  if (!isSuper && !isAdmin) {
-    return replyWithContext("Only group admins or super users can use this command.");
-  }
-
-  if (!arg || arg.length === 0) {
-    return replyWithContext("Please provide a message to send.");
-  }
-
-  const textToSend = arg.join(" ");
-  const members = metadata.participants.map(p => p.id);
   let failedCount = 0, sentCount = 0;
 
   for (const member of members) {
-    if (member.split("@")[0] === sock.user.id.split(":")[0]) continue; // skip bot itself
+    if (member.split("@")[0] === sock.user.id.split(":")[0]) continue;
 
     try {
       await sock.sendMessage(member, {
         text: `📢 *Message from group: ${metadata.subject}*\n\n${textToSend}`,
         contextInfo: {
-          forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363295141350550@newsletter',
-              newsletterName: 'ALONE MD V²',
-              serverMessageId: 143},
+          forwardingScore: 1,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: "120363295141350550@newsletter",
+            newsletterName: "ALONE MD V²",
+            serverMessageId: 143,
+          },
           externalAdReply: {
-            title: "🎭ALONE MD GROUP BROADCASTER🏆",
-            body: `From ${ms.pushName || "an Admin"}`,
+            title: "🎭 ALONE MD GROUP BROADCASTER 🏆",
+            body: `From ${ms.pushName || "a Member"}`,
             mediaType: 1,
             renderLargerThumbnail: false,
           },
         },
       });
+
       sentCount++;
-      await new Promise(r => setTimeout(r, 1300)); // Delay to avoid rate limits
+      const delay = 5000 + Math.floor(Math.random() * 3000); // 5–8s delay
+      await new Promise(r => setTimeout(r, delay));
     } catch (err) {
       console.error(`Failed to message ${member}:`, err?.message || err);
       failedCount++;
     }
   }
 
-  return replyWithContext(`✅ Sent to ${sentCount} members.\n❌ Failed: ${failedCount}`);
+  return replyWithContext(`✅ Sent to ${sentCount} members.\n❌ Failed: ${failedCount}\n\nLucky user: *${lastSenderName}*`);
 });
